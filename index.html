@@ -83,7 +83,7 @@
 
     /* ── HERO ── */
     .hero {
-      min-height: 80vh;
+      min-height: 90vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
       padding-top: 68px;
@@ -143,7 +143,30 @@
       margin-bottom: 2.6rem;
     }
 
-    /* Hero Right */
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(26,42,94,0.1);
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--gray-light);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+    }
+
     .hero-right {
       position: relative;
       background: var(--navy);
@@ -151,19 +174,6 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-    }
-
-    .hero-right::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        -45deg,
-        rgba(255,255,255,0.025) 0px,
-        rgba(255,255,255,0.025) 1px,
-        transparent 1px,
-        transparent 24px
-      );
     }
 
     .score-card { position: relative; z-index: 2; text-align: center; }
@@ -177,49 +187,138 @@
       letter-spacing: -0.04em;
     }
 
-    /* ── FOUNDERS SECTION ── */
+    .score-label {
+      font-size: 0.82rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-top: 0.5rem;
+    }
+
+    /* ── SECTIONS GENERAL ── */
+    .section { padding: 6rem 5rem; position: relative; z-index: 1; }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 3.5rem;
+    }
+
+    .section-tag {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 0.8rem;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--navy-dark);
+    }
+
+    /* ── SUBJECTS GRID ── */
+    .subjects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
+
+    .subject-card {
+      background: var(--white);
+      border-radius: 6px;
+      padding: 2rem;
+      border: 1px solid rgba(26,42,94,0.1);
+      box-shadow: 0 2px 12px rgba(26,42,94,0.04);
+      transition: transform 0.25s, box-shadow 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .subject-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(26,42,94,0.1); }
+
+    .card-icon { font-size: 1.8rem; margin-bottom: 1rem; display: block; }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.55rem;
+      color: var(--navy-dark);
+    }
+
+    .card-desc { font-size: 0.87rem; color: var(--gray); line-height: 1.68; }
+
+    .card-tag {
+      display: inline-block;
+      margin-top: 1.2rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--navy);
+      background: rgba(26,42,94,0.07);
+      padding: 0.28rem 0.7rem;
+      border-radius: 3px;
+    }
+
+    /* ── TEAM SECTION ── */
     .team-section { padding: 6rem 5rem; background: var(--white); }
     .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3rem; margin-top: 3rem; }
-    .member-card { text-align: center; padding: 2rem; border: 1px solid rgba(26,42,94,0.1); border-radius: 8px; }
-    .member-photo { width: 150px; height: 150px; border-radius: 50%; background: var(--gray-pale); margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .member-card { text-align: center; padding: 2.5rem; border: 1px solid rgba(26,42,94,0.1); border-radius: 8px; }
+    .member-photo { width: 120px; height: 120px; border-radius: 50%; background: var(--gray-pale); margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
 
-    /* ── FORM SECTION ── */
-    .form-section { background: var(--gray-pale); padding: 6rem 5rem; }
-    .contact-container { max-width: 600px; margin: 0 auto; background: var(--white); padding: 3rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    /* ── PRICING ── */
+    .gray-band { background: var(--gray-pale); padding: 6rem 5rem; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem; }
+    .pricing-card { background: var(--white); border: 2px solid rgba(26,42,94,0.1); border-radius: 8px; padding: 2.5rem 2rem; position: relative; transition: transform 0.25s; }
+    .pricing-card.featured { border-color: var(--navy); background: var(--navy); color: white; }
+    .plan-price { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1.8rem; }
+    .plan-features li::before { content: '✓'; font-weight: 700; color: var(--navy); margin-right: 0.7rem; }
+    .pricing-card.featured .plan-features li::before { color: var(--gold); }
+
+    /* ── ENROLLMENT FORM ── */
+    .form-section { padding: 6rem 5rem; background: var(--white); }
+    .contact-container { max-width: 700px; margin: 0 auto; background: var(--white); padding: 3.5rem; border: 1px solid rgba(26,42,94,0.1); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
     
     .form-group { margin-bottom: 1.5rem; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; }
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 1rem;
+      width: 100%; padding: 0.9rem; border: 1px solid rgba(26,42,94,0.15); border-radius: 4px; font-family: inherit; font-size: 1rem; color: var(--ink);
     }
     .submit-btn {
-      width: 100%; background: var(--navy); color: white; border: none; padding: 1rem; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+      width: 100%; background: var(--navy); color: white; border: none; padding: 1.1rem; border-radius: 4px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s, transform 0.1s;
     }
-    .submit-btn:hover { background: var(--navy-dark); }
+    .submit-btn:hover { background: var(--navy-dark); transform: translateY(-1px); }
 
     /* ── FOOTER ── */
     footer {
       background: var(--navy-dark);
       color: rgba(255,255,255,0.35);
-      padding: 2.5rem 5rem;
+      padding: 3rem 5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
     }
 
     @media (max-width: 900px) {
       nav { padding: 1rem 1.5rem; }
       .nav-links { display: none; }
-      .hero { grid-template-columns: 1fr; }
-      .hero-left { padding: 4rem 1.5rem; }
-      .team-grid { grid-template-columns: 1fr; }
-      .section, .form-section, .team-section { padding: 4rem 1.5rem; }
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 4rem 1.5rem 3rem; }
+      .subjects-grid, .pricing-grid, .team-grid { grid-template-columns: 1fr; }
+      .section, .gray-band, .form-section { padding: 4rem 1.5rem; }
+      footer { flex-direction: column; gap: 2rem; text-align: center; }
     }
   </style>
 </head>
 <body>
 
+  <!-- NAV -->
   <nav>
     <a href="#" class="nav-logo">
       <img src="SATDoctor_Logo.jpeg" alt="SAT Doctor Logo" />
@@ -228,62 +327,172 @@
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a href="#enroll">Enroll Now</a></li>
     </ul>
   </nav>
 
+  <!-- HERO -->
   <section class="hero">
     <div class="hero-left">
-      <div class="hero-tag">Expert Test Prep Since 2018</div>
+      <div class="hero-tag">Expert Test Prep Since 2018[cite: 1]</div>
       <h1>Your Score,<br/><em>Prescribed</em><br/>to Perfection.[cite: 1]</h1>
-      <p class="hero-sub">Individualized SAT & AP tutoring with proven strategies and expert instructors.[cite: 1]</p>
+      <p class="hero-sub">Individualized SAT & AP tutoring with proven strategies, expert instructors, and a track record of elite score improvements.[cite: 1]</p>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">1580</div>
+          <div class="stat-label">Avg SAT Score[cite: 1]</div>
+        </div>
+        <div>
+          <div class="stat-num">97%</div>
+          <div class="stat-label">AP Score of 4–5[cite: 1]</div>
+        </div>
+        <div>
+          <div class="stat-num">500+</div>
+          <div class="stat-label">Students Helped[cite: 1]</div>
+        </div>
+      </div>
     </div>
+
     <div class="hero-right">
       <div class="score-card">
         <div class="score-display">1600</div>
-        <div class="score-label">Perfect Score Target</div>
+        <div class="score-label">Perfect Score Target[cite: 1]</div>
       </div>
     </div>
   </section>
 
-  <!-- TEAM SECTION -->
+  <!-- SUBJECTS -->
+  <section class="section" id="subjects">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">What We Teach[cite: 1]</div>
+        <h2>SAT & AP Courses,<br/>Done Right[cite: 1]</h2>
+      </div>
+    </div>
+    <div class="subjects-grid">
+      <div class="subject-card">
+        <span class="card-icon">📐</span>
+        <div class="card-title">SAT Math[cite: 1]</div>
+        <p class="card-desc">Algebra, advanced math, geometry, and data analysis covering every question type with targeted strategies.[cite: 1]</p>
+        <span class="card-tag">SAT[cite: 1]</span>
+      </div>
+      <div class="subject-card">
+        <span class="card-icon">📖</span>
+        <div class="card-title">SAT Reading & Writing[cite: 1]</div>
+        <p class="card-desc">Master reading comprehension, evidence-based analysis, grammar, and rhetoric for top verbal scores.[cite: 1]</p>
+        <span class="card-tag">SAT[cite: 1]</span>
+      </div>
+      <div class="subject-card">
+        <span class="card-icon">∫</span>
+        <div class="card-title">AP Calculus AB/BC[cite: 1]</div>
+        <p class="card-desc">Limits, derivatives, integrals, and series — comprehensive prep for both AB and BC exams.[cite: 1]</p>
+        <span class="card-tag">AP[cite: 1]</span>
+      </div>
+      <div class="subject-card">
+        <span class="card-icon">⚗️</span>
+        <div class="card-title">AP Chemistry[cite: 1]</div>
+        <p class="card-desc">Stoichiometry, thermodynamics, kinetics, and electrochemistry with lab-focused practice strategies.[cite: 1]</p>
+        <span class="card-tag">AP[cite: 1]</span>
+      </div>
+      <div class="subject-card">
+        <span class="card-icon">⚡</span>
+        <div class="card-title">AP Physics 1, 2 & C[cite: 1]</div>
+        <p class="card-desc">Mechanics, electricity, magnetism, and waves — taught conceptually and mathematically for a 5.[cite: 1]</p>
+        <span class="card-tag">AP[cite: 1]</span>
+      </div>
+      <div class="subject-card">
+        <span class="card-icon">📜</span>
+        <div class="card-title">AP History & English[cite: 1]</div>
+        <p class="card-desc">APUSH, AP World, AP Lang, and AP Lit — essay writing, DBQs, LEQs, and analysis strategies.[cite: 1]</p>
+        <span class="card-tag">AP[cite: 1]</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
   <section class="team-section" id="team">
-    <div class="section-tag">Leadership</div>
-    <h2>Meet Our Founders</h2>
+    <div class="section-tag">Our Team</div>
+    <h2>Meet the Founders</h2>
     <div class="team-grid">
       <div class="member-card">
         <div class="member-photo">👤</div>
         <h3>Co-founder Name</h3>
-        <p class="role" style="color: var(--gold); font-weight: 500; margin-bottom: 1rem;">CEO & Founder</p>
-        <p class="card-desc">Expert in standardized test strategy with over 8 years of experience helping students reach the 99th percentile.</p>
+        <p style="color: var(--gold); font-weight: 500; margin-bottom: 1rem;">Chief Executive Officer</p>
+        <p class="card-desc">A leading expert in test preparation with years of experience helping students secure placements in elite universities.</p>
       </div>
       <div class="member-card">
         <div class="member-photo">👤</div>
         <h3>Co-founder Name</h3>
-        <p class="role" style="color: var(--gold); font-weight: 500; margin-bottom: 1rem;">Head of Curriculum</p>
-        <p class="card-desc">Specializes in AP Science and Mathematics, developing the "Prescription" method that identifies student gaps instantly.</p>
+        <p style="color: var(--gold); font-weight: 500; margin-bottom: 1rem;">Chief Technology Officer</p>
+        <p class="card-desc">Expert in academic curriculum design, specializing in advanced mathematics and the science behind effective learning systems.</p>
       </div>
     </div>
   </section>
 
-  <!-- CONTACT FORM -->
-  <section class="form-section" id="contact">
+  <!-- PRICING -->
+  <section class="gray-band" id="pricing">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Plans & Pricing[cite: 1]</div>
+        <h2>Invest in Your<br/>Score[cite: 1]</h2>
+      </div>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="plan-name">Starter[cite: 1]</div>
+        <div class="plan-price">$89[cite: 1]</div>
+        <div class="plan-period">per session[cite: 1]</div>
+        <ul class="plan-features">
+          <li>1-on-1 tutoring sessions[cite: 1]</li>
+          <li>Session recap notes[cite: 1]</li>
+          <li>Practice problems provided[cite: 1]</li>
+          <li>Email support between sessions[cite: 1]</li>
+        </ul>
+      </div>
+      <div class="pricing-card featured">
+        <div class="plan-name">Intensive[cite: 1]</div>
+        <div class="plan-price">$599[cite: 1]</div>
+        <div class="plan-period">8-session package[cite: 1]</div>
+        <ul class="plan-features">
+          <li>Everything in Starter[cite: 1]</li>
+          <li>Full diagnostic assessment[cite: 1]</li>
+          <li>Custom study plan[cite: 1]</li>
+          <li>2 full-length practice tests[cite: 1]</li>
+          <li>Score improvement guarantee[cite: 1]</li>
+        </ul>
+      </div>
+      <div class="pricing-card">
+        <div class="plan-name">Elite[cite: 1]</div>
+        <div class="plan-price">$1,299[cite: 1]</div>
+        <div class="plan-period">20-session package[cite: 1]</div>
+        <ul class="plan-features">
+          <li>Everything in Intensive[cite: 1]</li>
+          <li>Unlimited practice tests[cite: 1]</li>
+          <li>College application essay help[cite: 1]</li>
+          <li>Priority scheduling[cite: 1]</li>
+          <li>Parent progress reports[cite: 1]</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENROLLMENT FORM -->
+  <section class="form-section" id="enroll">
     <div class="contact-container">
-      <div style="text-align: center; margin-bottom: 2rem;">
-        <div class="section-tag">Get Started</div>
-        <h2>Enroll Now</h2>
+      <div style="text-align: center; margin-bottom: 2.5rem;">
+        <div class="section-tag">Registration</div>
+        <h2>Start Your Enrollment</h2>
       </div>
       
-      <!-- Replace 'your-email@example.com' with your actual email address -->
       <form action="https://formsubmit.co/your-email@example.com" method="POST">
         <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" name="name" required placeholder="John Doe">
+          <label>Student Name</label>
+          <input type="text" name="name" required placeholder="Full Name">
         </div>
         
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" name="email" required placeholder="john@example.com">
+          <input type="email" name="email" required placeholder="email@example.com">
         </div>
         
         <div class="form-group">
@@ -292,7 +501,7 @@
         </div>
         
         <div class="form-group">
-          <label>Interested Class</label>
+          <label>Interested Course</label>
           <select name="class_interest" required>
             <option value="" disabled selected>Select a subject</option>
             <option value="SAT Math">SAT Math</option>
@@ -305,24 +514,23 @@
         </div>
         
         <div class="form-group">
-          <label>Notes / Questions</label>
-          <textarea name="message" rows="4" placeholder="Tell us about your goals..."></textarea>
+          <label>Additional Notes</label>
+          <textarea name="message" rows="4" placeholder="Mention your target score or specific areas of concern..."></textarea>
         </div>
 
-        <!-- FormSubmit Configuration -->
-        <input type="hidden" name="_subject" value="New SAT Doctor Enrollment Request!">
+        <input type="hidden" name="_subject" value="New Enrollment Inquiry from SatDoctor Website">
         <input type="hidden" name="_template" value="table">
-        
-        <button type="submit" class="submit-btn">Submit Information</button>
+        <button type="submit" class="submit-btn">Submit Enrollment Info</button>
       </form>
     </div>
   </section>
 
+  <!-- FOOTER -->
   <footer>
     <div class="footer-logo">
-      <img src="SATDoctor_Logo.jpeg" alt="SAT Doctor" style="filter: brightness(0) invert(1); opacity: 0.5; height: 30px;" />
+      <img src="SATDoctor_Logo.jpeg" alt="SAT Doctor" style="filter: brightness(0) invert(1); opacity: 0.5; height: 32px;" />
     </div>
-    <div>© 2026 SAT Doctor. All rights reserved.</div>
+    <div style="text-align: right;">© 2026 SAT Doctor. All rights reserved.[cite: 1]</div>
   </footer>
 
 </body>
