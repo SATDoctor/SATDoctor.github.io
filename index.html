@@ -491,117 +491,141 @@
 
     .member-bio { font-size: 0.87rem; color: var(--gray); line-height: 1.75; }
 
-    /* ── PRICING ── */
-    .pricing-section { padding: 6rem 5rem; background: var(--white); }
+    /* ── SAT GROUP COURSES ── */
+    .group-section { padding: 6rem 5rem; background: var(--white); }
 
-    .pricing-grid {
+    .group-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
       margin-top: 1rem;
     }
 
-    .pricing-card {
-      background: var(--gray-pale);
-      border: 2px solid rgba(26,42,94,0.1);
+    .group-card {
+      border: 2px solid rgba(26,42,94,0.12);
       border-radius: 8px;
-      padding: 2.5rem 2rem;
-      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .group-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(26,42,94,0.1); }
+    .group-card.featured { border-color: var(--navy); }
+
+    .group-card-header {
+      background: var(--navy);
+      padding: 2rem 2.2rem 1.8rem;
+    }
+
+    .group-card.featured .group-card-header { background: var(--navy-dark); }
+
+    .group-level-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+
+    .group-card-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 0.4rem;
+    }
+
+    .group-card-header p {
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.55;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      margin-top: 1.1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 0.04em;
+    }
+
+    .group-card-body {
+      background: var(--gray-pale);
+      padding: 2rem 2.2rem;
+      flex: 1;
       display: flex;
       flex-direction: column;
     }
 
-    .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(26,42,94,0.1); }
-    .pricing-card.featured { border-color: var(--navy); background: var(--navy); }
-
-    .popular-tag {
-      position: absolute;
-      top: -14px; left: 50%;
-      transform: translateX(-50%);
-      background: var(--navy);
-      color: white;
-      font-size: 0.68rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0.3rem 1rem;
-      border-radius: 20px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    .plan-name {
-      font-size: 0.75rem;
-      font-weight: 500;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--gray);
-      margin-bottom: 0.8rem;
-    }
-
-    .pricing-card.featured .plan-name { color: rgba(255,255,255,0.45); }
-
-    .plan-price {
-      font-family: 'Playfair Display', serif;
-      font-size: 3rem;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 0.3rem;
-      color: var(--navy-dark);
-    }
-
-    .pricing-card.featured .plan-price { color: white; }
-
-    .plan-period { font-size: 0.82rem; color: var(--gray); }
-    .pricing-card.featured .plan-period { color: rgba(255,255,255,0.4); }
-
-    .plan-divider {
-      border: none;
-      border-top: 1px solid rgba(26,42,94,0.1);
-      margin: 1.5rem 0;
-    }
-
-    .pricing-card.featured .plan-divider { border-color: rgba(255,255,255,0.12); }
-
-    .plan-features {
+    .group-features {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
+      gap: 0.8rem;
       flex: 1;
+      margin-bottom: 2rem;
     }
 
-    .plan-features li {
+    .group-features li {
       display: flex;
-      align-items: center;
-      gap: 0.7rem;
+      align-items: flex-start;
+      gap: 0.75rem;
       font-size: 0.87rem;
       color: var(--gray);
+      line-height: 1.5;
     }
 
-    .pricing-card.featured .plan-features li { color: rgba(255,255,255,0.7); }
+    .group-features li::before {
+      content: '✓';
+      font-weight: 700;
+      color: var(--navy);
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
 
-    .plan-features li::before { content: '✓'; font-weight: 700; color: var(--navy); flex-shrink: 0; }
-    .pricing-card.featured .plan-features li::before { color: var(--gold); }
-
-    .plan-btn {
+    .group-enroll-btn {
       display: block;
       text-align: center;
-      margin-top: 1.8rem;
-      padding: 0.85rem;
+      padding: 0.95rem;
       border-radius: 4px;
-      font-size: 0.87rem;
-      font-weight: 500;
-      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
       letter-spacing: 0.04em;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
       transition: all 0.2s;
+      width: 100%;
     }
 
-    .plan-btn-outline { border: 2px solid rgba(26,42,94,0.25); color: var(--navy); background: transparent; }
-    .plan-btn-outline:hover { border-color: var(--navy); background: var(--navy); color: white; }
+    .group-enroll-btn.solid { background: var(--navy); color: white; }
+    .group-enroll-btn.solid:hover { background: var(--navy-dark); transform: translateY(-1px); }
 
-    .plan-btn-filled { background: var(--gold); color: var(--navy-dark); border: 2px solid var(--gold); font-weight: 600; }
-    .plan-btn-filled:hover { background: #b8922e; border-color: #b8922e; }
+    .group-enroll-btn.gold { background: var(--gold); color: var(--navy-dark); }
+    .group-enroll-btn.gold:hover { background: #b8922e; transform: translateY(-1px); }
+
+    .prefill-notice {
+      display: none;
+      background: rgba(26,42,94,0.06);
+      border: 1px solid rgba(26,42,94,0.15);
+      border-radius: 4px;
+      padding: 0.7rem 1rem;
+      font-size: 0.8rem;
+      color: var(--navy);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .prefill-notice.show { display: block; }
 
     /* ── ENROLLMENT FORM ── */
     .form-section { padding: 6rem 5rem; background: var(--gray-pale); }
@@ -717,8 +741,8 @@
       .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-left { padding: 4rem 1.5rem 3rem; }
       .hero-right { min-height: 300px; }
-      .section, .team-section, .pricing-section, .form-section { padding: 4rem 1.5rem; }
-      .subjects-grid, .pricing-grid, .team-grid { grid-template-columns: 1fr; }
+      .section, .team-section, .group-section, .form-section { padding: 4rem 1.5rem; }
+      .subjects-grid, .group-grid, .team-grid { grid-template-columns: 1fr; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .contact-container { padding: 2rem 1.2rem; }
       footer { flex-direction: column; gap: 1.5rem; text-align: center; padding: 2rem 1.5rem; }
@@ -736,7 +760,7 @@
     <ul class="nav-links">
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
-      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#group-courses">Group Classes</a></li>
       <li><a href="#enroll" class="nav-cta">Enroll Now</a></li>
     </ul>
   </nav>
@@ -919,59 +943,61 @@
     </div>
   </section>
 
-  <!-- PRICING -->
-  <section class="pricing-section" id="pricing">
+  <!-- SAT GROUP COURSES -->
+  <section class="group-section" id="group-courses">
     <div class="section-header">
       <div>
-        <div class="section-tag">Plans &amp; Pricing</div>
-        <h2>Invest in Your<br/>Score</h2>
+        <div class="section-tag">Group Classes</div>
+        <h2>SAT Group Courses</h2>
       </div>
     </div>
-    <div class="pricing-grid">
+    <p style="font-size:1rem; color:var(--gray); line-height:1.8; max-width:580px; margin-bottom:3rem;">
+      Our small-group SAT courses combine the structure of a classroom with the attention of expert instruction.
+      Two levels ensure every student is working at the right pace alongside peers at the same stage.
+    </p>
 
-      <div class="pricing-card">
-        <div class="plan-name">Starter</div>
-        <div class="plan-price">$89</div>
-        <div class="plan-period">per session</div>
-        <hr class="plan-divider"/>
-        <ul class="plan-features">
-          <li>1-on-1 tutoring sessions</li>
-          <li>Session recap notes</li>
-          <li>Practice problems provided</li>
-          <li>Email support between sessions</li>
-        </ul>
-        <a href="#enroll" class="plan-btn plan-btn-outline">Get Started</a>
+    <div class="group-grid">
+
+      <div class="group-card">
+        <div class="group-card-header">
+          <span class="group-level-tag">Level 1 — Foundations</span>
+          <h3>SAT Prep:<br/>Beginner</h3>
+          <p>An approachable introduction to the SAT — building core skills in math, reading, and writing from the ground up.</p>
+          <span class="grade-badge">Recommended: Grade 8 – 9</span>
+        </div>
+        <div class="group-card-body">
+          <ul class="group-features">
+            <li>Fundamentals of SAT Math — algebra, problem-solving, and data analysis</li>
+            <li>Introduction to test pacing and time management</li>
+            <li>Full-length practice test with detailed score review</li>
+            <li>Small group setting — personalized attention within a cohort</li>
+            <li>Session recap notes after every class</li>
+          </ul>
+          <button class="group-enroll-btn solid" onclick="prefillForm('SAT Group Course — Beginner (Level 1)', 'Grade 8–9')">
+            Enroll in Level 1
+          </button>
+        </div>
       </div>
 
-      <div class="pricing-card featured">
-        <div class="popular-tag">Most Popular</div>
-        <div class="plan-name">Intensive</div>
-        <div class="plan-price">$599</div>
-        <div class="plan-period">8-session package</div>
-        <hr class="plan-divider"/>
-        <ul class="plan-features">
-          <li>Everything in Starter</li>
-          <li>Full diagnostic assessment</li>
-          <li>Custom study plan</li>
-          <li>2 full-length practice tests</li>
-          <li>Score improvement guarantee</li>
-        </ul>
-        <a href="#enroll" class="plan-btn plan-btn-filled">Book Intensive</a>
-      </div>
-
-      <div class="pricing-card">
-        <div class="plan-name">Elite</div>
-        <div class="plan-price">$1,299</div>
-        <div class="plan-period">20-session package</div>
-        <hr class="plan-divider"/>
-        <ul class="plan-features">
-          <li>Everything in Intensive</li>
-          <li>Unlimited practice tests</li>
-          <li>College application essay help</li>
-          <li>Priority scheduling</li>
-          <li>Parent progress reports</li>
-        </ul>
-        <a href="#enroll" class="plan-btn plan-btn-outline">Go Elite</a>
+      <div class="group-card featured">
+        <div class="group-card-header">
+          <span class="group-level-tag">Level 2 — Advanced</span>
+          <h3>SAT Prep:<br/>Advanced</h3>
+          <p>Higher-order reasoning, advanced math, and refined test strategy for students targeting top scores.</p>
+          <span class="grade-badge">Recommended: Grade 10 – 12</span>
+        </div>
+        <div class="group-card-body">
+          <ul class="group-features">
+            <li>Advanced SAT Math — geometry, statistics, and complex algebra</li>
+            <li>Score-maximizing strategy — error pattern analysis and targeted drilling</li>
+            <li>Two full-length practice tests with detailed breakdowns</li>
+            <li>Small group setting — personalized attention within a cohort</li>
+            <li>Session recap notes and supplemental practice problems</li>
+          </ul>
+          <button class="group-enroll-btn gold" onclick="prefillForm('SAT Group Course — Advanced (Level 2)', 'Grade 10–12')">
+            Enroll in Level 2
+          </button>
+        </div>
       </div>
 
     </div>
@@ -987,6 +1013,10 @@
       </div>
 
       <form action="https://formsubmit.co/thesatdoctor1600@gmail.com" method="POST">
+
+        <div id="prefill-notice" class="prefill-notice">
+          Course pre-selected. Fill in your details below and submit.
+        </div>
 
         <input type="hidden" name="_subject" value="New Enrollment Inquiry from SATDoctor Website" />
         <input type="hidden" name="_template" value="table" />
@@ -1012,7 +1042,11 @@
           <label>Interested Course</label>
           <select name="class_interest" required>
             <option value="" disabled selected>Select a subject &amp; level</option>
-            <optgroup label="SAT Prep">
+            <optgroup label="SAT Group Classes">
+              <option value="SAT Group Course — Beginner (Level 1)">SAT Group — Beginner, Level 1 (Grade 8–9)</option>
+              <option value="SAT Group Course — Advanced (Level 2)">SAT Group — Advanced, Level 2 (Grade 10–12)</option>
+            </optgroup>
+            <optgroup label="SAT 1-on-1 Prep">
               <option value="SAT Math">SAT Math</option>
               <option value="Full SAT Prep">Full SAT Prep (Math + R&amp;W)</option>
             </optgroup>
@@ -1075,11 +1109,29 @@
     <ul class="footer-links">
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
-      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#group-courses">Group Classes</a></li>
       <li><a href="#enroll">Enroll</a></li>
     </ul>
     <div>© 2026 SAT Doctor. All rights reserved.</div>
   </footer>
+
+  <script>
+    function prefillForm(courseName, gradeRange) {
+      const select = document.querySelector('select[name="class_interest"]');
+      if (select) {
+        for (let opt of select.options) {
+          if (opt.value === courseName) { opt.selected = true; break; }
+        }
+      }
+      const notes = document.querySelector('textarea[name="message"]');
+      if (notes && notes.value === '') {
+        notes.value = 'Interested in: ' + courseName + ' (' + gradeRange + ')';
+      }
+      const notice = document.getElementById('prefill-notice');
+      if (notice) notice.classList.add('show');
+      document.getElementById('enroll').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
 
 </body>
 </html>
