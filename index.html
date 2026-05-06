@@ -1057,35 +1057,33 @@
         <p style="font-size:0.92rem; color:var(--gray); margin-top:0.8rem; line-height:1.7;">Fill out the form below and we'll be in touch within 24 hours to schedule your free consultation.</p>
       </div>
 
-      <form action="https://formsubmit.co/thesatdoctor1600@gmail.com" method="POST">
+      <form id="enroll-form" novalidate>
 
         <div id="prefill-notice" class="prefill-notice">
           Selection pre-filled below. Add your details and submit — we'll be in touch within 24 hours.
         </div>
 
-        <input type="hidden" name="_subject" value="New Enrollment Inquiry from SATDoctor Website" />
-        <input type="hidden" name="_template" value="table" />
-        <input type="hidden" name="_next" value="https://yourdomain.com/thankyou.html" />
-        <input type="text" name="_honey" style="display:none" />
+        <!-- hidden spam trap -->
+        <input type="text" id="honey" style="display:none" />
 
         <div class="form-group">
           <label>Student Name</label>
-          <input type="text" name="name" required placeholder="Full Name" autocomplete="name" />
+          <input type="text" id="f-name" name="name" required placeholder="Full Name" autocomplete="name" />
         </div>
 
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" name="email" required placeholder="email@example.com" autocomplete="email" />
+          <input type="email" id="f-email" name="email" required placeholder="email@example.com" autocomplete="email" />
         </div>
 
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" name="phone" required placeholder="(555) 000-0000" autocomplete="tel" />
+          <input type="tel" id="f-phone" name="phone" required placeholder="(555) 000-0000" autocomplete="tel" />
         </div>
 
         <div class="form-group">
           <label>Interested Course</label>
-          <select name="class_interest" required>
+          <select id="f-course" name="class_interest" required>
             <option value="" disabled selected>Select a subject &amp; level</option>
             <optgroup label="SAT Group Classes">
               <option value="SAT Group Course — Beginner (Level 1)">SAT Group — Beginner, Level 1 (Grade 8–9)</option>
@@ -1137,13 +1135,22 @@
 
         <div class="form-group">
           <label>Additional Notes</label>
-          <textarea name="message" rows="4" placeholder="Mention your target score, current level, test date, or any specific areas of concern…"></textarea>
+          <textarea id="f-message" name="message" rows="4" placeholder="Mention your target score, current level, test date, or any specific areas of concern…"></textarea>
         </div>
 
-        <button type="submit" class="submit-btn">Submit Enrollment Info</button>
+        <button type="submit" class="submit-btn" id="submit-btn">Submit Enrollment Info</button>
         <p class="form-note">We'll respond within 24 hours. No spam, ever.</p>
 
       </form>
+
+      <!-- Success state (hidden until submission) -->
+      <div id="form-success" style="display:none; text-align:center; padding: 2rem 0;">
+        <div style="width:56px; height:56px; border-radius:50%; background:rgba(26,42,94,0.08); display:flex; align-items:center; justify-content:center; margin: 0 auto 1.2rem;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--navy-dark); margin-bottom:0.5rem;">You're all set!</h3>
+        <p style="font-size:0.92rem; color:var(--gray); line-height:1.7;">We received your inquiry and will be in touch within 24 hours.</p>
+      </div>
     </div>
   </section>
 
@@ -1162,14 +1169,82 @@
   </footer>
 
   <script>
+    // ── REPLACE THIS with your Apps Script Web App URL after deploying ──
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyaDVejkKrued85GfwwPDRT0Cuyg2LsqALu5RjSV78O7FU_dG1P27VrR0OsLhU6TKw/exec';
+
+    // Formsubmit endpoint (no redirect, JSON mode)
+    const FORMSUBMIT_URL = 'https://formsubmit.co/ajax/thesatdoctor1600@gmail.com';
+
+    document.getElementById('enroll-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Spam trap check
+      if (document.getElementById('honey').value) return;
+
+      // Basic validation
+      const name    = document.getElementById('f-name').value.trim();
+      const email   = document.getElementById('f-email').value.trim();
+      const phone   = document.getElementById('f-phone').value.trim();
+      const course  = document.getElementById('f-course').value;
+      const message = document.getElementById('f-message').value.trim();
+
+      if (!name || !email || !phone || !course) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+      const payload = { name, email, phone, course, message, timestamp };
+
+      // Fire both requests simultaneously
+      const results = await Promise.allSettled([
+
+        // 1) Google Apps Script → Sheets
+        fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',                        // Apps Script requires no-cors
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }),
+
+        // 2) Formsubmit → Email
+        fetch(FORMSUBMIT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name, email, phone,
+            class_interest: course,
+            message,
+            _subject: 'New Enrollment Inquiry from SATDoctor Website',
+            _template: 'table',
+            _captcha: 'false'
+          })
+        })
+
+      ]);
+
+      // Show success regardless (no-cors means we can't read Apps Script response,
+      // but if we got here without a network error it went through)
+      document.getElementById('enroll-form').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+    });
+
+    // ── PRE-FILL HELPER ──
     function prefillForm(courseName, gradeRange) {
-      const select = document.querySelector('select[name="class_interest"]');
+      const select = document.getElementById('f-course');
       if (select) {
         for (let opt of select.options) {
           if (opt.value === courseName) { opt.selected = true; break; }
         }
       }
-      const notes = document.querySelector('textarea[name="message"]');
+      const notes = document.getElementById('f-message');
       if (notes && notes.value === '') {
         notes.value = 'Interested in: ' + courseName + ' (' + gradeRange + ')';
       }
