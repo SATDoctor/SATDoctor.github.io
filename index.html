@@ -1393,6 +1393,10 @@
     // ── Apps Script Web App URL — deploy with Who has access: Anyone (see apps-script/README.md) ──
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTFXAiC81l9POiK7sKQ0qHU__ErfMF9XHx7iDJhtfEmklfklf42dayO9eIOfnSR1E-/exec';
 
+    // Google Sheet ID (between /d/ and /edit in the sheet URL). Share sheet: "Anyone with the link" → Viewer.
+    // Used to load the calendar without JSONP (more reliable on GitHub Pages).
+    const BOOKING_SPREADSHEET_ID = '1W8FseUOBU0Wt97nIUps-2Cue3AurUXBZMfnq7oq3iJk';
+
     // Formsubmit endpoint (no redirect, JSON mode)
     const FORMSUBMIT_URL = 'https://formsubmit.co/ajax/thesatdoctor1600@gmail.com';
 
@@ -1457,7 +1461,7 @@
       document.getElementById('form-success').style.display = 'block';
     });
 
-    // ── GROUP CALENDAR (JSONP — no Google sign-in for visitors) ──
+    // ── GROUP CALENDAR ──
     let calendarInstance = null;
     let calendarLevelFilter = '';
     let selectedSlot = null;
@@ -1465,19 +1469,19 @@
 
     function appsScriptJsonp(params) {
       return new Promise(function (resolve, reject) {
-        var called = false;
+        var settled = false;
         var cbName = 'satDocCb' + (++jsonpId) + '_' + Date.now();
         var qs = new URLSearchParams(params);
         qs.set('callback', cbName);
 
         var script = document.createElement('script');
         var timeout = setTimeout(function () {
-          if (!called) {
-            called = true;
+          if (!settled) {
+            settled = true;
             cleanup();
-            reject(new Error('Booking server timed out. Redeploy the Apps Script web app.'));
+            reject(new Error('Booking API timed out.'));
           }
-        }, 25000);
+        }, 30000);
 
         function cleanup() {
           clearTimeout(timeout);
@@ -1486,35 +1490,112 @@
         }
 
         window[cbName] = function (data) {
-          if (called) return;
-          called = true;
+          if (settled) return;
+          settled = true;
           cleanup();
           resolve(data);
         };
 
         script.onerror = function () {
-          if (called) return;
-          called = true;
+          if (settled) return;
+          settled = true;
           cleanup();
-          reject(new Error(
-            'Cannot reach the booking API. In Apps Script use Deploy → Manage deployments → Who has access: Anyone, then deploy a new version. Allow script.google.com if you use an ad blocker.'
-          ));
-        };
-
-        script.onload = function () {
-          setTimeout(function () {
-            if (!called) {
-              called = true;
-              cleanup();
-              reject(new Error(
-                'Booking API blocked or requires Google sign-in. Redeploy the web app with Who has access set to Anyone (not "Anyone with Google account").'
-              ));
-            }
-          }, 1200);
+          reject(new Error('JSONP blocked or invalid response.'));
         };
 
         script.src = APPS_SCRIPT_URL + '?' + qs.toString();
-        document.head.appendChild(script);
+        document.body.appendChild(script);
+      });
+    }
+
+    function submitBookingNoCors(payload) {
+      var body = new URLSearchParams(payload);
+      body.set('action', 'book');
+      return fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+    }
+
+    function parseCsv(text) {
+      var rows = [];
+      var row = [];
+      var cell = '';
+      var inQuotes = false;
+      for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (c === '"') {
+          inQuotes = !inQuotes;
+          continue;
+        }
+        if (!inQuotes && c === ',') {
+          row.push(cell);
+          cell = '';
+          continue;
+        }
+        if (!inQuotes && (c === '\n' || c === '\r')) {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell);
+          if (row.some(function (v) { return v; })) rows.push(row);
+          row = [];
+          cell = '';
+          continue;
+        }
+        cell += c;
+      }
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function fetchSlotsFromPublicSheet(fromDate, toDate) {
+      if (!BOOKING_SPREADSHEET_ID) {
+        return Promise.reject(new Error('BOOKING_SPREADSHEET_ID not set'));
+      }
+      var url = 'https://docs.google.com/spreadsheets/d/' + BOOKING_SPREADSHEET_ID +
+        '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent('Slots');
+      return fetch(url).then(function (res) {
+        if (!res.ok) throw new Error('Could not read public Slots sheet. Share the spreadsheet: Anyone with the link can view.');
+        return res.text();
+      }).then(function (csv) {
+        var rows = parseCsv(csv);
+        if (rows.length < 2) return [];
+        var headers = rows[0].map(function (h) { return h.trim().toLowerCase().replace(/\s+/g, '_'); });
+        var fromMs = fromDate.getTime();
+        var toMs = toDate.getTime();
+        var slots = [];
+
+        for (var r = 1; r < rows.length; r++) {
+          var row = rows[r];
+          var slot = {};
+          headers.forEach(function (h, idx) {
+            slot[h] = row[idx] !== undefined ? String(row[idx]).trim() : '';
+          });
+          if (!slot.slot_id || slot.status !== 'open') continue;
+          var startMs = Date.parse(slot.start_at);
+          if (isNaN(startMs) || startMs < fromMs || startMs > toMs) continue;
+          if (calendarLevelFilter && slot.lesson_type !== calendarLevelFilter) continue;
+          var capacity = parseInt(slot.capacity, 10) || 0;
+          var booked = parseInt(slot.booked_count, 10) || 0;
+          var spotsLeft = capacity - booked;
+          if (spotsLeft <= 0) continue;
+          slots.push({
+            id: slot.slot_id,
+            title: slot.title || slot.lesson_type,
+            start: slot.start_at,
+            end: slot.end_at,
+            lessonType: slot.lesson_type,
+            tutor: slot.tutor,
+            capacity: capacity,
+            booked: booked,
+            spotsLeft: spotsLeft
+          });
+        }
+        return slots;
       });
     }
 
@@ -1536,6 +1617,16 @@
     }
 
     function fetchSlots(fromDate, toDate) {
+      if (BOOKING_SPREADSHEET_ID) {
+        return fetchSlotsFromPublicSheet(fromDate, toDate).catch(function (sheetErr) {
+          console.warn('Sheet CSV load failed, trying Apps Script:', sheetErr);
+          return fetchSlotsFromApi(fromDate, toDate);
+        });
+      }
+      return fetchSlotsFromApi(fromDate, toDate);
+    }
+
+    function fetchSlotsFromApi(fromDate, toDate) {
       var params = { action: 'slots', from: fromDate.toISOString(), to: toDate.toISOString() };
       if (calendarLevelFilter) params.level = calendarLevelFilter;
       return appsScriptJsonp(params).then(function (data) {
@@ -1585,7 +1676,11 @@
               success(events);
             })
             .catch(function (err) {
-              setCalendarStatus(err.message, true);
+              var msg = err.message || String(err);
+              if (!BOOKING_SPREADSHEET_ID) {
+                msg += ' Set BOOKING_SPREADSHEET_ID in index.html (see apps-script/README.md) or fix Apps Script deployment (Who has access: Anyone).';
+              }
+              setCalendarStatus(msg, true);
               document.getElementById('calendar-empty').style.display = 'block';
               failure(err);
             });
@@ -1606,7 +1701,6 @@
         });
       });
 
-      appsScriptJsonp({ action: 'ping' }).catch(function () { /* status shown on slot fetch */ });
     }
 
     function openGroupCalendar(level) {
@@ -1671,29 +1765,47 @@
       btn.textContent = 'Reserving…';
       errEl.style.display = 'none';
 
-      appsScriptJsonp({
-        action: 'book',
+      var bookPayload = {
         slotId: selectedSlot.id,
         name: name,
         email: email,
         phone: phone,
         course: selectedSlot.title,
         requestId: 'web-' + Date.now()
-      }).then(function (data) {
-        if (!data.ok) throw new Error(data.error || 'Booking failed');
+      };
+
+      function showBookSuccess(data) {
         document.getElementById('booking-form').classList.add('hide');
         document.getElementById('booking-success').classList.add('show');
+        var when = data && data.start
+          ? formatEtRange(data.start, data.end)
+          : formatEtRange(selectedSlot.start, selectedSlot.end);
         document.getElementById('booking-success-text').innerHTML =
-          'Confirmed for <strong>' + formatEtRange(data.start, data.end) + '</strong>.<br/>' +
-          'Zoom link sent to <strong>' + email + '</strong>.' +
-          (data.zoomUrl ? '<br/><br/><a href="' + data.zoomUrl + '" class="btn-primary" style="display:inline-block;margin-top:0.5rem;">Open Zoom link</a>' : '');
+          'Reserved for <strong>' + when + '</strong>.<br/>' +
+          'We emailed your Zoom link to <strong>' + email + '</strong>.' +
+          (data && data.zoomUrl
+            ? '<br/><br/><a href="' + data.zoomUrl + '" class="btn-primary" style="display:inline-block;margin-top:0.5rem;">Open Zoom link</a>'
+            : '');
         if (calendarInstance) calendarInstance.refetchEvents();
-      }).catch(function (err) {
-        errEl.textContent = err.message;
-        errEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Confirm reservation';
-      });
+      }
+
+      appsScriptJsonp(Object.assign({ action: 'book' }, bookPayload))
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.error || 'Booking failed');
+          showBookSuccess(data);
+        })
+        .catch(function () {
+          return submitBookingNoCors(bookPayload).then(function () {
+            showBookSuccess(null);
+          });
+        })
+        .catch(function (err) {
+          errEl.innerHTML = (err.message || 'Booking failed') +
+            ' Please use the <a href="#enroll">enrollment form</a> below or call us.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Confirm reservation';
+        });
     });
 
     document.addEventListener('DOMContentLoaded', initGroupCalendar);
