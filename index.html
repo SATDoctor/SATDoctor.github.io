@@ -6,6 +6,7 @@
   <meta name="description" content="SAT Doctor offers personalized SAT & AP tutoring by PhD engineers in Maryland. Expert 1-on-1 prep with a score improvement guarantee. Book a free consultation today." />
   <title>SAT Doctor — Expert SAT & AP Tutoring</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet"/>
   <style>
     :root {
       --navy:       #1a2a5e;
@@ -627,6 +628,174 @@
 
     .prefill-notice.show { display: block; }
 
+    /* ── BOOKING CALENDAR ── */
+    .calendar-section {
+      padding: 6rem 5rem;
+      background: var(--gray-pale);
+      position: relative;
+      z-index: 1;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .level-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .level-filter-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 1.5px solid rgba(26,42,94,0.2);
+      background: var(--white);
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .level-filter-btn:hover { border-color: var(--navy); color: var(--navy); }
+    .level-filter-btn.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: var(--white);
+    }
+
+    .calendar-wrap {
+      background: var(--white);
+      border: 1px solid rgba(26,42,94,0.1);
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 24px rgba(26,42,94,0.06);
+    }
+
+    #group-calendar { min-height: 520px; }
+
+    .fc { font-family: 'DM Sans', sans-serif; }
+    .fc .fc-toolbar-title { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--navy-dark); }
+    .fc .fc-button-primary {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+    .fc .fc-button-primary:hover { background: var(--navy-dark); border-color: var(--navy-dark); }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active { background: var(--navy-dark); border-color: var(--navy-dark); }
+    .fc-event { cursor: pointer; border: none !important; padding: 2px 4px; }
+    .fc-event-level1 { background: var(--navy) !important; }
+    .fc-event-level2 { background: #3d4f8c !important; }
+
+    .calendar-loading,
+    .calendar-error,
+    .calendar-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+
+    .calendar-error { color: #b45309; }
+
+    .calendar-legend {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      font-size: 0.78rem;
+      color: var(--gray);
+    }
+
+    .calendar-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .calendar-legend i {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 2px;
+    }
+
+    .booking-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17,29,66,0.55);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .booking-modal-overlay.open { display: flex; }
+
+    .booking-modal {
+      background: var(--white);
+      border-radius: 8px;
+      max-width: 440px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .booking-modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: var(--gray-light);
+      cursor: pointer;
+    }
+
+    .booking-modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--navy-dark);
+      margin-bottom: 0.35rem;
+      padding-right: 2rem;
+    }
+
+    .booking-modal-meta {
+      font-size: 0.88rem;
+      color: var(--gray);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .booking-modal-meta strong { color: var(--navy); }
+
+    .booking-spots {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #7a5c10;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.35);
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .booking-success {
+      display: none;
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .booking-success.show { display: block; }
+    .booking-form.hide { display: none; }
+
     /* ── ENROLLMENT FORM ── */
     .form-section { padding: 6rem 5rem; background: var(--gray-pale); }
 
@@ -741,7 +910,9 @@
       .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-left { padding: 4rem 1.5rem 3rem; }
       .hero-right { min-height: 300px; }
-      .section, .team-section, .group-section, .form-section { padding: 4rem 1.5rem; }
+      .section, .team-section, .group-section, .calendar-section, .form-section { padding: 4rem 1.5rem; }
+      #group-calendar { min-height: 400px; }
+      .calendar-wrap { padding: 0.75rem; }
       .subjects-grid, .group-grid, .team-grid { grid-template-columns: 1fr; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .contact-container { padding: 2rem 1.2rem; }
@@ -761,6 +932,7 @@
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
       <li><a href="#group-courses">Group Classes</a></li>
+      <li><a href="#book-calendar">Book a Class</a></li>
       <li><a href="#enroll" class="nav-cta">Enroll Now</a></li>
     </ul>
   </nav>
@@ -992,8 +1164,8 @@
             </div>
           </div>
 
-          <button class="group-enroll-btn solid" onclick="prefillForm('SAT Group Course — Beginner (Level 1)', 'Grade 8–9')">
-            Enroll in Level 1
+          <button type="button" class="group-enroll-btn solid" onclick="openGroupCalendar('Level 1')">
+            View Level 1 Schedule
           </button>
         </div>
       </div>
@@ -1026,14 +1198,84 @@
             </div>
           </div>
 
-          <button class="group-enroll-btn gold" onclick="prefillForm('SAT Group Course — Advanced (Level 2)', 'Grade 10–12')">
-            Enroll in Level 2
+          <button type="button" class="group-enroll-btn gold" onclick="openGroupCalendar('Level 2')">
+            View Level 2 Schedule
           </button>
         </div>
       </div>
 
     </div>
   </section>
+
+  <!-- GROUP CLASS CALENDAR -->
+  <section class="calendar-section" id="book-calendar">
+    <div class="section-tag">Schedule</div>
+    <h2>Book a Group Class</h2>
+    <p style="font-size:1rem; color:var(--gray); line-height:1.8; max-width:640px; margin: 1rem 0 2rem;">
+      Choose an open session below. Times are shown in Eastern Time. After you register, we email your Zoom link right away.
+    </p>
+
+    <div class="calendar-toolbar">
+      <div class="level-filters">
+        <button type="button" class="level-filter-btn active" data-level="">All levels</button>
+        <button type="button" class="level-filter-btn" data-level="Level 1">Level 1 — Beginner</button>
+        <button type="button" class="level-filter-btn" data-level="Level 2">Level 2 — Advanced</button>
+      </div>
+      <p id="calendar-status" class="calendar-loading" style="margin:0; padding:0;">Loading sessions…</p>
+    </div>
+
+    <div class="calendar-wrap">
+      <div id="group-calendar"></div>
+      <div id="calendar-empty" class="calendar-empty" style="display:none;">
+        No upcoming group sessions for this level. Use the enrollment form below or check back soon.
+      </div>
+    </div>
+
+    <div class="calendar-legend">
+      <span><i style="background:var(--navy);"></i> Level 1 — Beginner</span>
+      <span><i style="background:#3d4f8c;"></i> Level 2 — Advanced</span>
+    </div>
+  </section>
+
+  <!-- BOOKING MODAL -->
+  <div class="booking-modal-overlay" id="booking-modal" aria-hidden="true">
+    <div class="booking-modal" role="dialog" aria-labelledby="booking-modal-title">
+      <button type="button" class="booking-modal-close" id="booking-modal-close" aria-label="Close">&times;</button>
+
+      <div id="booking-modal-body">
+        <h3 id="booking-modal-title">Reserve your seat</h3>
+        <p class="booking-modal-meta" id="booking-modal-meta"></p>
+        <span class="booking-spots" id="booking-spots"></span>
+
+        <form id="booking-form" class="booking-form" novalidate>
+          <input type="text" id="booking-honey" style="display:none" tabindex="-1" autocomplete="off" />
+
+          <div class="form-group">
+            <label for="booking-name">Student Name</label>
+            <input type="text" id="booking-name" required placeholder="Full name" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label for="booking-email">Email</label>
+            <input type="email" id="booking-email" required placeholder="email@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="booking-phone">Phone</label>
+            <input type="tel" id="booking-phone" required placeholder="(555) 000-0000" autocomplete="tel" />
+          </div>
+          <p id="booking-form-error" style="display:none; color:#b45309; font-size:0.85rem; margin-bottom:1rem;"></p>
+          <button type="submit" class="submit-btn" id="booking-submit-btn">Confirm reservation</button>
+        </form>
+
+        <div id="booking-success" class="booking-success">
+          <div style="width:56px; height:56px; border-radius:50%; background:rgba(26,42,94,0.08); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 style="font-family:'Playfair Display',serif; font-size:1.35rem; color:var(--navy-dark); margin-bottom:0.5rem;">You're registered!</h3>
+          <p id="booking-success-text" style="font-size:0.9rem; color:var(--gray); line-height:1.7;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 1-ON-1 CTA BAND -->
   <section style="background: var(--navy); padding: 4rem 5rem; text-align: center; position: relative; overflow: hidden;">
@@ -1163,13 +1405,15 @@
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
       <li><a href="#group-courses">Group Classes</a></li>
+      <li><a href="#book-calendar">Book a Class</a></li>
       <li><a href="#enroll">Enroll</a></li>
     </ul>
     <div>© 2026 SAT Doctor. All rights reserved.</div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <script>
-    // ── REPLACE THIS with your Apps Script Web App URL after deploying ──
+    // ── Apps Script Web App URL (deploy apps-script/Code.gs — see apps-script/README.md) ──
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTFXAiC81l9POiK7sKQ0qHU__ErfMF9XHx7iDJhtfEmklfklf42dayO9eIOfnSR1E-/exec';
 
     // Formsubmit endpoint (no redirect, JSON mode)
@@ -1235,6 +1479,246 @@
       document.getElementById('enroll-form').style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
     });
+
+    // ── GROUP CALENDAR (JSONP — works from GitHub Pages) ──
+    let calendarInstance = null;
+    let calendarLevelFilter = '';
+    let selectedSlot = null;
+    let jsonpCounter = 0;
+
+    function appsScriptJsonp(params) {
+      return new Promise(function (resolve, reject) {
+        const cbName = 'satDoctorCb' + (++jsonpCounter) + '_' + Date.now();
+        const qs = new URLSearchParams(params);
+        qs.set('callback', cbName);
+
+        const script = document.createElement('script');
+        const timeout = setTimeout(function () {
+          cleanup();
+          reject(new Error('Request timed out. Check your Apps Script deployment.'));
+        }, 20000);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = function (data) {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = function () {
+          cleanup();
+          reject(new Error('Could not reach the booking server.'));
+        };
+
+        script.src = APPS_SCRIPT_URL + '?' + qs.toString();
+        document.body.appendChild(script);
+      });
+    }
+
+    function setCalendarStatus(text, isError) {
+      const el = document.getElementById('calendar-status');
+      if (!el) return;
+      el.textContent = text || '';
+      el.className = isError ? 'calendar-error' : '';
+      el.style.display = text ? 'block' : 'none';
+    }
+
+    function formatEtRange(startIso, endIso) {
+      const opts = { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' };
+      const timeOpts = { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' };
+      const start = new Date(startIso);
+      const end = new Date(endIso);
+      return start.toLocaleDateString('en-US', opts) + ' · ' +
+        start.toLocaleTimeString('en-US', timeOpts) + ' – ' +
+        end.toLocaleTimeString('en-US', timeOpts) + ' ET';
+    }
+
+    async function fetchSlots(fromDate, toDate) {
+      const params = {
+        action: 'slots',
+        from: fromDate.toISOString(),
+        to: toDate.toISOString()
+      };
+      if (calendarLevelFilter) params.level = calendarLevelFilter;
+      const data = await appsScriptJsonp(params);
+      if (!data.ok) throw new Error(data.error || 'Failed to load sessions');
+      return data.slots || [];
+    }
+
+    function slotsToEvents(slots) {
+      return slots.map(function (slot) {
+        const isL1 = slot.lessonType === 'Level 1';
+        return {
+          id: slot.id,
+          title: slot.title + ' (' + slot.spotsLeft + ' left)',
+          start: slot.start,
+          end: slot.end,
+          classNames: [isL1 ? 'fc-event-level1' : 'fc-event-level2'],
+          extendedProps: slot.extendedProps || {
+            lessonType: slot.lessonType,
+            tutor: slot.tutor,
+            spotsLeft: slot.spotsLeft,
+            capacity: slot.capacity
+          }
+        };
+      });
+    }
+
+    function initGroupCalendar() {
+      const calEl = document.getElementById('group-calendar');
+      if (!calEl || typeof FullCalendar === 'undefined') return;
+
+      calendarInstance = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,listWeek'
+        },
+        height: 'auto',
+        timeZone: 'America/New_York',
+        eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+        events: function (info, successCallback, failureCallback) {
+          setCalendarStatus('Loading sessions…', false);
+          fetchSlots(info.start, info.end)
+            .then(function (slots) {
+              const events = slotsToEvents(slots);
+              document.getElementById('calendar-empty').style.display =
+                events.length ? 'none' : 'block';
+              setCalendarStatus(events.length ? '' : 'No sessions in this range', false);
+              successCallback(events);
+            })
+            .catch(function (err) {
+              setCalendarStatus(err.message, true);
+              document.getElementById('calendar-empty').style.display = 'block';
+              failureCallback(err);
+            });
+        },
+        eventClick: function (info) {
+          openBookingModal(info.event);
+        }
+      });
+
+      calendarInstance.render();
+
+      document.querySelectorAll('.level-filter-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.level-filter-btn').forEach(function (b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
+          calendarLevelFilter = btn.getAttribute('data-level') || '';
+          calendarInstance.refetchEvents();
+        });
+      });
+    }
+
+    function openGroupCalendar(level) {
+      calendarLevelFilter = level || '';
+      document.querySelectorAll('.level-filter-btn').forEach(function (btn) {
+        const match = (btn.getAttribute('data-level') || '') === calendarLevelFilter;
+        btn.classList.toggle('active', match);
+      });
+      if (calendarInstance) calendarInstance.refetchEvents();
+      document.getElementById('book-calendar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openBookingModal(event) {
+      selectedSlot = {
+        id: event.id,
+        title: event.title.replace(/\s*\(\d+ left\)$/, ''),
+        start: event.startStr,
+        end: event.endStr,
+        lessonType: event.extendedProps.lessonType,
+        tutor: event.extendedProps.tutor,
+        spotsLeft: event.extendedProps.spotsLeft
+      };
+
+      document.getElementById('booking-modal-title').textContent = selectedSlot.title;
+      document.getElementById('booking-modal-meta').innerHTML =
+        '<strong>' + formatEtRange(selectedSlot.start, selectedSlot.end) + '</strong><br/>' +
+        'Tutor: ' + (selectedSlot.tutor || 'SAT Doctor') + '<br/>' +
+        'Level: ' + (selectedSlot.lessonType || '');
+      document.getElementById('booking-spots').textContent =
+        selectedSlot.spotsLeft + ' seat' + (selectedSlot.spotsLeft === 1 ? '' : 's') + ' remaining';
+
+      document.getElementById('booking-form').classList.remove('hide');
+      document.getElementById('booking-success').classList.remove('show');
+      document.getElementById('booking-form-error').style.display = 'none';
+      document.getElementById('booking-submit-btn').disabled = false;
+      document.getElementById('booking-submit-btn').textContent = 'Confirm reservation';
+
+      document.getElementById('booking-modal').classList.add('open');
+      document.getElementById('booking-modal').setAttribute('aria-hidden', 'false');
+    }
+
+    function closeBookingModal() {
+      document.getElementById('booking-modal').classList.remove('open');
+      document.getElementById('booking-modal').setAttribute('aria-hidden', 'true');
+      selectedSlot = null;
+    }
+
+    document.getElementById('booking-modal-close').addEventListener('click', closeBookingModal);
+    document.getElementById('booking-modal').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('booking-modal')) closeBookingModal();
+    });
+
+    document.getElementById('booking-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!selectedSlot) return;
+      if (document.getElementById('booking-honey').value) return;
+
+      const name = document.getElementById('booking-name').value.trim();
+      const email = document.getElementById('booking-email').value.trim();
+      const phone = document.getElementById('booking-phone').value.trim();
+      const errEl = document.getElementById('booking-form-error');
+
+      if (!name || !email || !phone) {
+        errEl.textContent = 'Please fill in all fields.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const btn = document.getElementById('booking-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Reserving…';
+      errEl.style.display = 'none';
+
+      try {
+        const requestId = 'web-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+        const data = await appsScriptJsonp({
+          action: 'book',
+          slotId: selectedSlot.id,
+          name: name,
+          email: email,
+          phone: phone,
+          course: selectedSlot.title,
+          requestId: requestId
+        });
+
+        if (!data.ok) throw new Error(data.error || 'Booking failed');
+
+        document.getElementById('booking-form').classList.add('hide');
+        document.getElementById('booking-success').classList.add('show');
+        document.getElementById('booking-success-text').innerHTML =
+          'Confirmed for <strong>' + formatEtRange(data.start, data.end) + '</strong>.<br/>' +
+          'We sent your Zoom link to <strong>' + email + '</strong>.' +
+          (data.zoomUrl ? '<br/><br/><a href="' + data.zoomUrl + '" class="btn-primary" style="display:inline-block;margin-top:0.5rem;">Open Zoom link</a>' : '');
+
+        if (calendarInstance) calendarInstance.refetchEvents();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Confirm reservation';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', initGroupCalendar);
 
     // ── PRE-FILL HELPER ──
     function prefillForm(courseName, gradeRange) {
