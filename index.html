@@ -1494,52 +1494,21 @@
       });
     }
 
-    // Resolved URL after Apps Script's 302 redirect (params survive on this URL)
-    var resolvedExecUrl = null;
-
-    function resolveExecUrl() {
-      if (resolvedExecUrl) return Promise.resolve(resolvedExecUrl);
-      // Use JSONP ping to discover nothing — we just need the redirect URL.
-      // Instead, use a cors-anywhere-style approach: fetch with cors mode to
-      // follow the redirect and capture the final URL.
-      // Actually: use an <img> trick or iframe — but simplest is XMLHttpRequest
-      // which exposes responseURL after following redirects.
-      return new Promise(function(resolve) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', APPS_SCRIPT_URL + '?action=ping', true);
-        xhr.onreadystatechange = function() {
-          if (xhr.readyState === 4) {
-            // responseURL is the final URL after all redirects
-            var finalUrl = xhr.responseURL || APPS_SCRIPT_URL;
-            // Strip everything after the path (remove query string from resolved URL)
-            resolvedExecUrl = finalUrl.split('?')[0];
-            console.log('[SAT Doctor] resolved exec URL:', resolvedExecUrl);
-            resolve(resolvedExecUrl);
-          }
-        };
-        xhr.onerror = function() { resolve(APPS_SCRIPT_URL); };
-        xhr.send();
-      });
-    }
-
     function submitBookingNoCors(payload) {
-      var data = Object.assign({ action: 'book' }, payload);
-      var qs = new URLSearchParams(data);
-      return resolveExecUrl().then(function(baseUrl) {
-        var url = baseUrl + '?' + qs.toString();
-        console.log('[SAT Doctor] final booking URL:', url);
-        return fetch(url, { method: 'GET', mode: 'no-cors' })
-          .then(function(res) {
-            console.log('[SAT Doctor] fetch completed, type:', res.type);
-          })
-          .catch(function(err) {
-            console.log('[SAT Doctor] fetch ERROR:', err.message);
-            throw err;
-          });
-      });
+      // JSONP is the only method that reliably survives Apps Script's redirect
+      // while keeping query parameters. The calendar already uses this for slots.
+      return appsScriptJsonp(Object.assign({ action: 'book' }, payload))
+        .then(function(data) {
+          console.log('[SAT Doctor] JSONP book response:', JSON.stringify(data));
+          if (!data.ok) throw new Error(data.error || 'Booking failed');
+        })
+        .catch(function(err) {
+          console.log('[SAT Doctor] JSONP book error:', err.message);
+          throw err;
+        });
     }
 
-        function parseCsv(text) {
+            function parseCsv(text) {
       var rows = [];
       var row = [];
       var cell = '';
@@ -1815,16 +1784,16 @@
         if (calendarInstance) calendarInstance.refetchEvents();
       }
 
-	submitBookingNoCors(bookPayload)
-	  .then(function () {
-		showBookSuccess(null);
-	  })
-	  .catch(function (err) {
-		errEl.innerHTML = 'Booking failed — please use the <a href="#enroll">enrollment form</a> below or call us.';
-		errEl.style.display = 'block';
-		btn.disabled = false;
-		btn.textContent = 'Confirm reservation';
-	  });
+      submitBookingNoCors(bookPayload)
+        .then(function () {
+          showBookSuccess(null);
+        })
+        .catch(function (err) {
+          errEl.innerHTML = (err && err.message ? err.message : 'Booking failed') + ' — please use the <a href="#enroll">enrollment form</a> below or call us.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Confirm reservation';
+        });
     });
 
     document.addEventListener('DOMContentLoaded', initGroupCalendar);
