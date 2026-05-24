@@ -511,19 +511,12 @@ function addNewSlotPrompt() {
 
   var end = new Date(start.getTime() + durationMin * 60 * 1000);
   ui.alert(
-    'Session added!
-
-' +
-    'Level: ' + level + '
-' +
-    'Tutor: ' + tutor + '
-' +
-    'Start: ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy h:mm a') + ' ET
-' +
-    'End:   ' + Utilities.formatDate(end,   'America/New_York', 'h:mm a') + ' ET
-' +
-    'Capacity: ' + capacity + '
-' +
+    'Session added!\n\n' +
+    'Level: ' + level + '\n' +
+    'Tutor: ' + tutor + '\n' +
+    'Start: ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy h:mm a') + ' ET\n' +
+    'End:   ' + Utilities.formatDate(end,   'America/New_York', 'h:mm a') + ' ET\n' +
+    'Capacity: ' + capacity + '\n' +
     'Zoom: ' + (zoomUrl || '(none set)')
   );
 }
