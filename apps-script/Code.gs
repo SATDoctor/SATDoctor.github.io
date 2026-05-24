@@ -9,6 +9,30 @@ var SHEET_LOG = 'Log';
 var SHEET_BOOKINGS = 'Bookings';
 var SHEET_ENROLLMENTS = 'Enrollments';
 
+// Set PRIVATE_SPREADSHEET_ID in Script Properties to write Bookings,
+// Enrollments, and Logs to a separate private sheet, keeping the public
+// sheet (used for calendar display) limited to Slots only.
+function getPrivateSpreadsheet_() {
+  var privateId = PropertiesService.getScriptProperties().getProperty('PRIVATE_SPREADSHEET_ID');
+  if (privateId) return SpreadsheetApp.openById(privateId);
+  return getSpreadsheet_(); // fall back to same sheet if not configured
+}
+
+function getPrivateSheet_(name) {
+  var ss = getPrivateSpreadsheet_();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    var headers = name === SHEET_BOOKINGS ? BOOKINGS_HEADERS
+                : name === SHEET_ENROLLMENTS ? ENROLLMENTS_HEADERS
+                : LOG_HEADERS;
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  }
+  return sheet;
+}
+
 var SLOTS_HEADERS = [
   'slot_id', 'start_at', 'end_at', 'lesson_type', 'title', 'tutor',
   'capacity', 'booked_count', 'status', 'zoom_join_url'
@@ -51,8 +75,6 @@ function doGet(e) {
         spreadsheetConfigured: !!getSpreadsheetId_(),
         hint: 'Use ?action=slots&from=2026-01-01&to=2027-12-31 to list sessions.'
       };
-    } else if (action === 'config') {
-      result = { ok: true, spreadsheetId: getSpreadsheetId_() };
     } else if (action === 'slots') {
       ensureSheets_();
       result = { ok: true, slots: listSlots_(params.from, params.to, params.level) };
@@ -319,7 +341,7 @@ function createBooking_(data) {
 }
 
 function appendBooking_(booking) {
-  var sheet = getSheet_(SHEET_BOOKINGS);
+  var sheet = getPrivateSheet_(SHEET_BOOKINGS);
   sheet.appendRow([
     booking.booking_id,
     booking.slot_id,
@@ -334,7 +356,7 @@ function appendBooking_(booking) {
 }
 
 function hasExistingBooking_(slotId, email) {
-  var sheet = getSheet_(SHEET_BOOKINGS);
+  var sheet = getPrivateSheet_(SHEET_BOOKINGS);
   var rows = sheet.getDataRange().getValues();
   if (rows.length < 2) return false;
 
@@ -356,7 +378,7 @@ function hasExistingBooking_(slotId, email) {
 // ── Enrollment (legacy) ─────────────────────────────────────────────────────
 
 function logEnrollment_(body) {
-  var sheet = getSheet_(SHEET_ENROLLMENTS);
+  var sheet = getPrivateSheet_(SHEET_ENROLLMENTS);
   sheet.appendRow([
     body.timestamp || new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
     body.name || '',
@@ -878,9 +900,10 @@ function escapeHtml_(s) {
 function log_(source, action, status, detail) {
   try {
     var ss = getSpreadsheet_();
-    var sheet = ss.getSheetByName(SHEET_LOG);
+    var privateSs = getPrivateSpreadsheet_();
+    var sheet = privateSs.getSheetByName(SHEET_LOG);
     if (!sheet) {
-      sheet = ss.insertSheet(SHEET_LOG);
+      sheet = privateSs.insertSheet(SHEET_LOG);
       sheet.getRange(1, 1, 1, 5).setValues([LOG_HEADERS]);
       sheet.setFrozenRows(1);
       sheet.getRange(1, 1, 1, 5).setFontWeight('bold');

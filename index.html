@@ -1394,10 +1394,11 @@
     // ── Apps Script Web App URL — deploy with Who has access: Anyone (see apps-script/README.md) ──
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTFXAiC81l9POiK7sKQ0qHU__ErfMF9XHx7iDJhtfEmklfklf42dayO9eIOfnSR1E-/exec';
 
-    // Slots are loaded via Apps Script JSONP — no direct sheet access needed.
-    // This means the spreadsheet does NOT need to be publicly shared, keeping
-    // student Bookings and Enrollments data private.
-    const BOOKING_SPREADSHEET_ID = '';
+    // Primary slot source: public Google Sheet CSV (Slots tab only).
+    // The sheet is shared "Anyone with link can view" — only the Slots tab
+    // is ever fetched by the website. Bookings/Enrollments are never requested.
+    // For full privacy, move Bookings/Enrollments to a separate private sheet.
+    const BOOKING_SPREADSHEET_ID = '1W8FseUOBU0Wt97nIUps-2Cue3AurUXBZMfnq7oq3iJk';
 
     // Formsubmit endpoint (no redirect, JSON mode)
     const FORMSUBMIT_URL = 'https://formsubmit.co/ajax/thesatdoctor1600@gmail.com';
