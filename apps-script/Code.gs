@@ -118,17 +118,24 @@ function doPost(e) {
   try {
     ensureSheets_();
     var body = parseRequestBody_(e);
-
     var action = (body.action || '').toLowerCase();
+
+    log_('doPost', action || 'no-action', 'received',
+      'name=' + (body.name || '') + ' email=' + (body.email || '') +
+      ' slotId=' + (body.slotId || '') + ' action=' + action);
 
     if (action === 'book') {
       result = createBooking_(body);
+    } else if (action === 'enroll') {
+      result = logEnrollment_(body);
+      log_('doPost', 'enroll', 'ok', 'name=' + body.name + ' email=' + body.email);
     } else {
       // Legacy enrollment form (no action field)
       result = logEnrollment_(body);
     }
   } catch (err) {
     result = { ok: false, error: String(err.message || err) };
+    log_('doPost', 'exception', 'fail', String(err.message || err));
   }
 
   return ContentService
@@ -574,6 +581,45 @@ function makeSlotRow_(lessonType, title, tutor, start, durationMin, capacity, zo
     'open',
     zoomUrl || ''
   ];
+}
+
+// ── Google Form → Bookings sheet trigger ────────────────────────────────────
+// Set this up: Form editor → ... menu → Script editor (or use this same script)
+// Triggers → Add trigger → onFormSubmit → From form → On form submit
+
+function onFormSubmit(e) {
+  try {
+    ensureSheets_();
+    var r = e.namedValues;
+
+    // Pull values by form field label (must match exactly what you named them)
+    var name   = r['Name']    ? r['Name'][0].trim()    : '';
+    var email  = r['Email']   ? r['Email'][0].trim()   : '';
+    var phone  = r['Phone']   ? r['Phone'][0].trim()   : '';
+    var course = r['Course']  ? r['Course'][0].trim()  : '';
+    var slotId = r['Slot ID'] ? r['Slot ID'][0].trim() : '';
+
+    log_('onFormSubmit', 'received', 'info',
+      'name=' + name + ' email=' + email + ' slotId=' + slotId);
+
+    if (!slotId || !name || !email || !phone) {
+      log_('onFormSubmit', 'validation', 'fail', 'missing fields');
+      return;
+    }
+
+    var result = createBooking_({
+      slotId: slotId,
+      name: name,
+      email: email,
+      phone: phone,
+      course: course,
+      requestId: 'form-' + Date.now()
+    });
+
+    log_('onFormSubmit', 'createBooking', result.ok ? 'ok' : 'fail', JSON.stringify(result));
+  } catch(err) {
+    log_('onFormSubmit', 'exception', 'fail', String(err.message || err));
+  }
 }
 
 // ── Sheet setup ─────────────────────────────────────────────────────────────

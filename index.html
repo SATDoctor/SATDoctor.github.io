@@ -1494,38 +1494,52 @@
       });
     }
 
-    function submitBookingNoCors(payload) {
-      // Primary: email notification via formsubmit.co (reliable cross-origin POST)
-      var emailPromise = fetch('https://formsubmit.co/ajax/thesatdoctor1600@gmail.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          name: payload.name,
-          email: payload.email,
-          phone: payload.phone,
-          slotId: payload.slotId,
-          course: payload.course,
-          _subject: 'New Group Class Booking — ' + payload.course,
-          _template: 'table',
-          _captcha: 'false'
-        })
-      }).then(function(r) {
-        console.log('[SAT Doctor] formsubmit status:', r.status);
-      }).catch(function(err) {
-        console.log('[SAT Doctor] formsubmit error:', err.message);
-      });
+    // Google Form submission URL — accepts cross-origin POSTs from any domain
+    var GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe16D49AlIhGl3E2CcBStt7SoKujCqzzIFu7CMUfhWNATc/formResponse';
 
-      // Secondary: best-effort JSONP to Apps Script to write Bookings sheet row
-      var jsonpPromise = appsScriptJsonp(Object.assign({ action: 'book' }, payload))
-        .then(function(data) {
-          console.log('[SAT Doctor] JSONP book response:', JSON.stringify(data));
-        })
-        .catch(function(err) {
-          console.log('[SAT Doctor] JSONP book error (non-fatal):', err.message);
+    function submitBookingNoCors(payload) {
+      return new Promise(function(resolve) {
+        var iframeName = 'booking-post-' + Date.now();
+
+        var iframe = document.createElement('iframe');
+        iframe.name = iframeName;
+        iframe.style.cssText = 'display:none;width:0;height:0;border:0;';
+        document.body.appendChild(iframe);
+
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GOOGLE_FORM_URL;
+        form.target = iframeName;
+        form.style.display = 'none';
+
+        // Map payload to Google Form entry IDs
+        var fields = {
+          'entry.1561007144': payload.name,
+          'entry.2022856311': payload.email,
+          'entry.1536132801': payload.phone,
+          'entry.493691072':  payload.course,
+          'entry.1551052437': payload.slotId
+        };
+
+        Object.keys(fields).forEach(function(entryId) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = entryId;
+          input.value = String(fields[entryId] || '');
+          form.appendChild(input);
         });
 
-      // Resolve as soon as the email goes through — don't wait on JSONP
-      return emailPromise;
+        document.body.appendChild(form);
+        console.log('[SAT Doctor] submitting to Google Form:', JSON.stringify(fields));
+        form.submit();
+
+        setTimeout(function() {
+          try { document.body.removeChild(form); } catch(e) {}
+          try { document.body.removeChild(iframe); } catch(e) {}
+          console.log('[SAT Doctor] Google Form POST complete');
+          resolve();
+        }, 3000);
+      });
     }
 
             function parseCsv(text) {
