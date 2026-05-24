@@ -1598,7 +1598,18 @@
             slot[h] = row[idx] !== undefined ? String(row[idx]).trim() : '';
           });
           if (!slot.slot_id || slot.status !== 'open') continue;
-          var startMs = Date.parse(slot.start_at);
+          // Normalize date strings from Google Sheets CSV — Sheets strips the
+          // trailing 'Z' so browsers parse as local time instead of UTC.
+          // Re-add 'Z' if no timezone offset is present so FullCalendar gets UTC.
+          function normalizeUtc(s) {
+            if (!s) return s;
+            s = s.trim();
+            if (!/[Zz+\-]\d*$/.test(s) && !/\+/.test(s.slice(10))) s += 'Z';
+            return s;
+          }
+          var startIso = normalizeUtc(slot.start_at);
+          var endIso   = normalizeUtc(slot.end_at);
+          var startMs = Date.parse(startIso);
           if (isNaN(startMs) || startMs < fromMs || startMs > toMs) continue;
           if (calendarLevelFilter && slot.lesson_type !== calendarLevelFilter) continue;
           var capacity = parseInt(slot.capacity, 10) || 0;
@@ -1608,8 +1619,8 @@
           slots.push({
             id: slot.slot_id,
             title: slot.title || slot.lesson_type,
-            start: slot.start_at,
-            end: slot.end_at,
+            start: startIso,
+            end: endIso,
             lessonType: slot.lesson_type,
             tutor: slot.tutor,
             capacity: capacity,
