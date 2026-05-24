@@ -425,7 +425,107 @@ function onOpen() {
     .addItem('Save spreadsheet ID for web app', 'saveSpreadsheetId')
     .addItem('Add sample group slots', 'addSampleSlots')
     .addItem('Add June 14, 2026 session (10 AM – 12 PM ET)', 'addJune14_2026Slot')
+    .addSeparator()
+    .addItem('Add new session…', 'addNewSlotPrompt')
     .addToUi();
+}
+
+function addNewSlotPrompt() {
+  var ui = SpreadsheetApp.getUi();
+
+  // Date
+  var dateRes = ui.prompt('New Session — Date',
+    'Enter date (e.g. 2026-07-12):', ui.ButtonSet.OK_CANCEL);
+  if (dateRes.getSelectedButton() !== ui.Button.OK) return;
+  var dateStr = dateRes.getResponseText().trim();
+
+  // Start time
+  var startRes = ui.prompt('New Session — Start Time',
+    'Enter start time in Eastern Time (e.g. 10:00 AM):', ui.ButtonSet.OK_CANCEL);
+  if (startRes.getSelectedButton() !== ui.Button.OK) return;
+  var startTimeStr = startRes.getResponseText().trim();
+
+  // Duration
+  var durRes = ui.prompt('New Session — Duration',
+    'Enter duration in minutes (e.g. 90):', ui.ButtonSet.OK_CANCEL);
+  if (durRes.getSelectedButton() !== ui.Button.OK) return;
+  var durationMin = parseInt(durRes.getResponseText().trim(), 10) || 90;
+
+  // Level
+  var levelRes = ui.prompt('New Session — Level',
+    'Enter level (Level 1 or Level 2):', ui.ButtonSet.OK_CANCEL);
+  if (levelRes.getSelectedButton() !== ui.Button.OK) return;
+  var level = levelRes.getResponseText().trim();
+  if (level !== 'Level 1' && level !== 'Level 2') {
+    ui.alert('Invalid level. Must be exactly "Level 1" or "Level 2".');
+    return;
+  }
+
+  // Tutor
+  var tutorRes = ui.prompt('New Session — Tutor',
+    'Enter tutor name (e.g. Krutant Mehta):', ui.ButtonSet.OK_CANCEL);
+  if (tutorRes.getSelectedButton() !== ui.Button.OK) return;
+  var tutor = tutorRes.getResponseText().trim();
+
+  // Capacity
+  var capRes = ui.prompt('New Session — Capacity',
+    'Enter max number of students (e.g. 6):', ui.ButtonSet.OK_CANCEL);
+  if (capRes.getSelectedButton() !== ui.Button.OK) return;
+  var capacity = parseInt(capRes.getResponseText().trim(), 10) || 6;
+
+  // Zoom URL (optional)
+  var zoomRes = ui.prompt('New Session — Zoom URL (optional)',
+    'Enter Zoom join URL, or leave blank to use Script Properties default:', ui.ButtonSet.OK_CANCEL);
+  if (zoomRes.getSelectedButton() !== ui.Button.OK) return;
+  var zoomUrl = zoomRes.getResponseText().trim();
+
+  // Parse date + time into Eastern Date
+  try {
+    var combined = dateStr + ' ' + startTimeStr;
+    var start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd hh:mm a');
+    if (!start || isNaN(start.getTime())) {
+      // Try 24h format
+      start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd HH:mm');
+    }
+    if (!start || isNaN(start.getTime())) {
+      ui.alert('Could not parse date/time: "' + combined + '". Use format: 2026-07-12 and 10:00 AM');
+      return;
+    }
+  } catch(err) {
+    ui.alert('Date/time error: ' + err.message);
+    return;
+  }
+
+  var title = level === 'Level 1'
+    ? 'SAT Group — Beginner (Level 1)'
+    : 'SAT Group — Advanced (Level 2)';
+
+  if (!zoomUrl) {
+    zoomUrl = getDefaultZoomUrl_(level);
+  }
+
+  ensureSheets_(true);
+  var sheet = getSheet_(SHEET_SLOTS);
+  var row = makeSlotRow_(level, title, tutor, start, durationMin, capacity, zoomUrl);
+  sheet.appendRow(row);
+
+  var end = new Date(start.getTime() + durationMin * 60 * 1000);
+  ui.alert(
+    'Session added!
+
+' +
+    'Level: ' + level + '
+' +
+    'Tutor: ' + tutor + '
+' +
+    'Start: ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy h:mm a') + ' ET
+' +
+    'End:   ' + Utilities.formatDate(end,   'America/New_York', 'h:mm a') + ' ET
+' +
+    'Capacity: ' + capacity + '
+' +
+    'Zoom: ' + (zoomUrl || '(none set)')
+  );
 }
 
 function saveSpreadsheetId() {
@@ -590,20 +690,23 @@ function makeSlotRow_(lessonType, title, tutor, start, durationMin, capacity, zo
 function onFormSubmit(e) {
   try {
     ensureSheets_();
-    var r = e.namedValues;
 
-    // Pull values by form field label (must match exactly what you named them)
-    var name   = r['Name']    ? r['Name'][0].trim()    : '';
-    var email  = r['Email']   ? r['Email'][0].trim()   : '';
-    var phone  = r['Phone']   ? r['Phone'][0].trim()   : '';
-    var course = r['Course']  ? r['Course'][0].trim()  : '';
-    var slotId = r['Slot ID'] ? r['Slot ID'][0].trim() : '';
+    // When triggered from spreadsheet "On form submit", e.namedValues has the data.
+    // Keys match the form field labels exactly.
+    var r = e.namedValues || {};
+
+    var name   = (r['Name']    || r['name']    || [''])[0].trim();
+    var email  = (r['Email']   || r['email']   || [''])[0].trim();
+    var phone  = (r['Phone']   || r['phone']   || [''])[0].trim();
+    var course = (r['Course']  || r['course']  || [''])[0].trim();
+    var slotId = (r['Slot ID'] || r['slot_id'] || r['SlotID'] || [''])[0].trim();
 
     log_('onFormSubmit', 'received', 'info',
       'name=' + name + ' email=' + email + ' slotId=' + slotId);
 
     if (!slotId || !name || !email || !phone) {
-      log_('onFormSubmit', 'validation', 'fail', 'missing fields');
+      log_('onFormSubmit', 'validation', 'fail',
+        'missing fields — got keys: ' + Object.keys(r).join(', '));
       return;
     }
 

@@ -1230,7 +1230,6 @@
       <button type="button" class="booking-modal-close" id="booking-modal-close" aria-label="Close">&times;</button>
       <h3 id="booking-modal-title">Reserve your seat</h3>
       <p class="booking-modal-meta" id="booking-modal-meta"></p>
-      <span class="booking-spots" id="booking-spots"></span>
       <form id="booking-form" class="booking-form" novalidate>
         <input type="text" id="booking-honey" style="display:none" tabindex="-1" autocomplete="off" />
         <div class="form-group">
@@ -1749,8 +1748,7 @@
       document.getElementById('booking-modal-meta').innerHTML =
         '<strong>' + formatEtRange(selectedSlot.start, selectedSlot.end) + '</strong><br/>Tutor: ' +
         (selectedSlot.tutor || 'SAT Doctor');
-      document.getElementById('booking-spots').textContent =
-        selectedSlot.spotsLeft + ' seat' + (selectedSlot.spotsLeft === 1 ? '' : 's') + ' remaining';
+
       document.getElementById('booking-form').classList.remove('hide');
       document.getElementById('booking-success').classList.remove('show');
       document.getElementById('booking-form-error').style.display = 'none';
