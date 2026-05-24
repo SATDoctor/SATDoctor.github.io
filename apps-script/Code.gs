@@ -403,23 +403,60 @@ function sendBookingConfirmationEmail_(name, email, slot, zoomUrl, bookingId) {
   var subject = 'Confirmed: ' + (slot.title || 'SAT Doctor Group Class') + ' — ' +
     Utilities.formatDate(start, tz, 'MMM d');
 
+  var tutor = escapeHtml_(slot.tutor || 'SAT Doctor');
+
   var htmlBody = [
-    '<p>Hi ' + escapeHtml_(name) + ',</p>',
-    '<p>Your group class is confirmed. Here are the details:</p>',
-    '<ul>',
-    '<li><strong>Class:</strong> ' + escapeHtml_(slot.title || slot.lesson_type) + '</li>',
-    '<li><strong>Level:</strong> ' + escapeHtml_(slot.lesson_type) + '</li>',
-    '<li><strong>Date:</strong> ' + dateStr + '</li>',
-    '<li><strong>Time:</strong> ' + timeStr + '</li>',
-    '<li><strong>Tutor:</strong> ' + escapeHtml_(slot.tutor || 'SAT Doctor') + '</li>',
-    '<li><strong>Confirmation #:</strong> ' + escapeHtml_(bookingId) + '</li>',
-    '</ul>',
-    zoomUrl
-      ? '<p><a href="' + escapeHtml_(zoomUrl) + '" style="display:inline-block;background:#1a2a5e;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;">Join Zoom Session</a></p>' +
-        '<p style="font-size:13px;color:#666;">Or copy this link: ' + escapeHtml_(zoomUrl) + '</p>'
-      : '<p>Your tutor will send the Zoom link before the session.</p>',
-    '<p>Questions? Reply to this email or call us.</p>',
-    '<p>— SAT Doctor</p>'
+    '<div style="font-family:Georgia,serif;max-width:580px;margin:0 auto;color:#1a1a2e;">',
+
+    // Header banner
+    '<div style="background:#1a2a5e;padding:28px 36px;border-radius:8px 8px 0 0;">',
+      '<p style="margin:0;font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:-0.01em;">SAT Doctor</p>',
+      '<p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.55);letter-spacing:0.06em;text-transform:uppercase;">Group Class Confirmation</p>',
+    '</div>',
+
+    // Body
+    '<div style="background:#ffffff;padding:32px 36px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">',
+
+      '<p style="font-size:16px;color:#111827;margin:0 0 8px;">Hi ' + escapeHtml_(name) + ',</p>',
+      '<p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 24px;">',
+        'We\'re thrilled to have you joining us! Your spot in the upcoming SAT group class is confirmed, and we look forward to working with you. ',
+        'Please keep an eye on your inbox — we\'ll be sending over additional study materials and prep resources ahead of the session to help you hit the ground running.',
+      '</p>',
+
+      // Session details card
+      '<div style="background:#f8f9fc;border:1px solid #e0e4f0;border-radius:6px;padding:20px 24px;margin-bottom:24px;">',
+        '<p style="margin:0 0 14px;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#6b7280;">Session Details</p>',
+        '<table style="width:100%;border-collapse:collapse;font-size:14px;">',
+          '<tr><td style="padding:5px 0;color:#6b7280;width:38%;">Class</td><td style="padding:5px 0;color:#111827;font-weight:600;">' + escapeHtml_(slot.title || slot.lesson_type) + '</td></tr>',
+          '<tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;color:#111827;font-weight:600;">' + dateStr + '</td></tr>',
+          '<tr><td style="padding:5px 0;color:#6b7280;">Time</td><td style="padding:5px 0;color:#111827;font-weight:600;">' + timeStr + '</td></tr>',
+          '<tr><td style="padding:5px 0;color:#6b7280;">Tutor</td><td style="padding:5px 0;color:#111827;font-weight:600;">' + tutor + '</td></tr>',
+          '<tr><td style="padding:5px 0;color:#6b7280;">Confirmation</td><td style="padding:5px 0;color:#111827;font-weight:600;">' + escapeHtml_(bookingId) + '</td></tr>',
+        '</table>',
+      '</div>',
+
+      // Zoom button or placeholder
+      zoomUrl
+        ? '<p style="margin:0 0 8px;"><a href="' + escapeHtml_(zoomUrl) + '" style="display:inline-block;background:#1a2a5e;color:#ffffff;padding:13px 28px;text-decoration:none;border-radius:4px;font-size:14px;font-weight:600;letter-spacing:0.02em;">Join Zoom Session</a></p>' +
+          '<p style="font-size:12px;color:#9ca3af;margin:6px 0 24px;">Or copy: ' + escapeHtml_(zoomUrl) + '</p>'
+        : '<p style="font-size:14px;color:#374151;margin:0 0 24px;">Your Zoom link will be sent before the session.</p>',
+
+      // Payment note
+      '<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:14px 18px;margin-bottom:28px;">',
+        '<p style="margin:0;font-size:13px;color:#92400e;line-height:1.65;">',
+          '<strong>Payment note:</strong> Your spot is tentatively held. A member of our team will reach out shortly to confirm your registration and arrange payment. Your seat is not finalized until payment is received.',
+        '</p>',
+      '</div>',
+
+      '<p style="font-size:14px;color:#374151;margin:0 0 28px;">If you have any questions in the meantime, don\'t hesitate to reply to this email — we\'re happy to help.</p>',
+
+      // Signature
+      '<p style="font-size:14px;color:#374151;margin:0 0 4px;">Warm regards,</p>',
+      '<p style="font-size:15px;font-weight:700;color:#1a2a5e;margin:0 0 2px;">' + tutor + '</p>',
+      '<p style="font-size:13px;color:#6b7280;margin:0;">SAT Doctor</p>',
+
+    '</div>',
+    '</div>'
   ].join('');
 
   var notifyEmail = PropertiesService.getScriptProperties().getProperty('NOTIFY_EMAIL') ||
