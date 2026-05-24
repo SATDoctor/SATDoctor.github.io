@@ -1495,14 +1495,18 @@
     }
 
     function submitBookingNoCors(payload) {
-      // GET with no-cors works without preflight and follows redirects properly.
-      // Params go on the URL so Apps Script receives them after its redirect.
       var data = Object.assign({ action: 'book' }, payload);
       var qs = new URLSearchParams(data);
-      return fetch(APPS_SCRIPT_URL + '?' + qs.toString(), {
-        method: 'GET',
-        mode: 'no-cors'
-      });
+      var url = APPS_SCRIPT_URL + '?' + qs.toString();
+      console.log('[SAT Doctor] submitBookingNoCors URL:', url);
+      return fetch(url, { method: 'GET', mode: 'no-cors' })
+        .then(function(res) {
+          console.log('[SAT Doctor] fetch completed, type:', res.type);
+        })
+        .catch(function(err) {
+          console.log('[SAT Doctor] fetch ERROR:', err.message);
+          throw err;
+        });
     }
 
         function parseCsv(text) {
