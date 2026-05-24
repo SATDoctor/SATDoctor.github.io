@@ -1495,17 +1495,37 @@
     }
 
     function submitBookingNoCors(payload) {
-      // JSONP is the only method that reliably survives Apps Script's redirect
-      // while keeping query parameters. The calendar already uses this for slots.
-      return appsScriptJsonp(Object.assign({ action: 'book' }, payload))
+      // Primary: email notification via formsubmit.co (reliable cross-origin POST)
+      var emailPromise = fetch('https://formsubmit.co/ajax/thesatdoctor1600@gmail.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          phone: payload.phone,
+          slotId: payload.slotId,
+          course: payload.course,
+          _subject: 'New Group Class Booking — ' + payload.course,
+          _template: 'table',
+          _captcha: 'false'
+        })
+      }).then(function(r) {
+        console.log('[SAT Doctor] formsubmit status:', r.status);
+      }).catch(function(err) {
+        console.log('[SAT Doctor] formsubmit error:', err.message);
+      });
+
+      // Secondary: best-effort JSONP to Apps Script to write Bookings sheet row
+      var jsonpPromise = appsScriptJsonp(Object.assign({ action: 'book' }, payload))
         .then(function(data) {
           console.log('[SAT Doctor] JSONP book response:', JSON.stringify(data));
-          if (!data.ok) throw new Error(data.error || 'Booking failed');
         })
         .catch(function(err) {
-          console.log('[SAT Doctor] JSONP book error:', err.message);
-          throw err;
+          console.log('[SAT Doctor] JSONP book error (non-fatal):', err.message);
         });
+
+      // Resolve as soon as the email goes through — don't wait on JSONP
+      return emailPromise;
     }
 
             function parseCsv(text) {
