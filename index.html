@@ -1401,7 +1401,7 @@
     // Formsubmit endpoint (no redirect, JSON mode)
     const FORMSUBMIT_URL = 'https://formsubmit.co/ajax/thesatdoctor1600@gmail.com';
 
-    document.getElementById('enroll-form').addEventListener('submit', async function(e) {
+    document.getElementById('enroll-form').addEventListener('submit', function(e) {
       e.preventDefault();
 
       // Spam trap check
