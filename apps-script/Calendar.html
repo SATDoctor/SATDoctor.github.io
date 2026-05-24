@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <style>
+    :root {
+      --navy: #1a2a5e;
+      --navy-dark: #111d42;
+      --gray: #6b7280;
+      --gray-pale: #f3f4f6;
+      --gold: #c9a84c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+      color: #111827;
+      background: #fff;
+      padding: 1rem 1.25rem 2rem;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .level-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .level-filter-btn {
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.45rem 0.9rem;
+      border-radius: 20px;
+      border: 1.5px solid rgba(26,42,94,0.2);
+      background: #fff;
+      color: var(--gray);
+      cursor: pointer;
+    }
+    .level-filter-btn.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+    #status { font-size: 0.82rem; color: var(--gray); }
+    #status.error { color: #b45309; }
+    #group-calendar { min-height: 480px; }
+    .fc { font-family: 'DM Sans', sans-serif; }
+    .fc .fc-toolbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      color: var(--navy-dark);
+    }
+    .fc .fc-button-primary {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+    .fc-event { cursor: pointer; border: none !important; }
+    .fc-event-level1 { background: var(--navy) !important; }
+    .fc-event-level2 { background: #3d4f8c !important; }
+    .legend {
+      display: flex;
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+    .legend i {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17,29,66,0.55);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      max-width: 420px;
+      width: 100%;
+      padding: 1.75rem;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--navy-dark);
+      margin-bottom: 0.35rem;
+      padding-right: 1.5rem;
+    }
+    .modal-meta { font-size: 0.85rem; color: var(--gray); line-height: 1.55; margin-bottom: 1rem; }
+    .spots {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #7a5c10;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.35);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--navy);
+      margin-bottom: 0.35rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      border: 1.5px solid rgba(26,42,94,0.15);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      margin-bottom: 0.9rem;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(26,42,94,0.08);
+    }
+    .btn-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .btn-submit {
+      width: 100%;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 0.9rem;
+      border-radius: 4px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-submit:disabled { opacity: 0.6; cursor: wait; }
+    .form-error { color: #b45309; font-size: 0.82rem; margin-bottom: 0.75rem; display: none; }
+    .success-panel { display: none; text-align: center; }
+    .success-panel.show { display: block; }
+    .booking-form.hide { display: none; }
+    .modal-wrap { position: relative; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div class="level-filters" id="level-filters">
+      <button type="button" class="level-filter-btn active" data-level="">All levels</button>
+      <button type="button" class="level-filter-btn" data-level="Level 1">Level 1</button>
+      <button type="button" class="level-filter-btn" data-level="Level 2">Level 2</button>
+    </div>
+    <span id="status"></span>
+  </div>
+
+  <div id="group-calendar"></div>
+  <div class="legend">
+    <span><i style="background:var(--navy);"></i> Level 1</span>
+    <span><i style="background:#3d4f8c;"></i> Level 2</span>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal modal-wrap">
+      <button type="button" class="btn-close" id="modal-close" aria-label="Close">&times;</button>
+      <h3 id="modal-title">Reserve your seat</h3>
+      <p class="modal-meta" id="modal-meta"></p>
+      <span class="spots" id="modal-spots"></span>
+
+      <form id="booking-form" class="booking-form">
+        <label for="b-name">Student name</label>
+        <input type="text" id="b-name" required autocomplete="name" />
+        <label for="b-email">Email</label>
+        <input type="email" id="b-email" required autocomplete="email" />
+        <label for="b-phone">Phone</label>
+        <input type="tel" id="b-phone" required autocomplete="tel" />
+        <p class="form-error" id="form-error"></p>
+        <button type="submit" class="btn-submit" id="btn-submit">Confirm reservation</button>
+      </form>
+
+      <div class="success-panel" id="success-panel">
+        <h3 style="font-family:'Playfair Display',serif;color:var(--navy-dark);margin-bottom:0.5rem;">You're registered!</h3>
+        <p id="success-text" style="font-size:0.88rem;color:var(--gray);line-height:1.65;"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var calendarLevelFilter = '';
+    var calendarInstance = null;
+    var selectedSlot = null;
+
+    (function applyUrlLevel() {
+      var m = /[?&]level=([^&]+)/.exec(window.location.search);
+      if (m) calendarLevelFilter = decodeURIComponent(m[1].replace(/\+/g, ' '));
+    })();
+
+    function setStatus(msg, isError) {
+      var el = document.getElementById('status');
+      el.textContent = msg || '';
+      el.className = isError ? 'error' : '';
+    }
+
+    function formatEtRange(startIso, endIso) {
+      var opts = { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' };
+      var t = { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' };
+      var start = new Date(startIso);
+      var end = new Date(endIso);
+      return start.toLocaleDateString('en-US', opts) + ' · ' +
+        start.toLocaleTimeString('en-US', t) + ' – ' +
+        end.toLocaleTimeString('en-US', t) + ' ET';
+    }
+
+    function slotsToEvents(slots) {
+      return slots.map(function (slot) {
+        return {
+          id: slot.id,
+          title: slot.title + ' (' + slot.spotsLeft + ' left)',
+          start: slot.start,
+          end: slot.end,
+          classNames: [slot.lessonType === 'Level 1' ? 'fc-event-level1' : 'fc-event-level2'],
+          extendedProps: {
+            lessonType: slot.lessonType,
+            tutor: slot.tutor,
+            spotsLeft: slot.spotsLeft,
+            title: slot.title
+          }
+        };
+      });
+    }
+
+    function loadSlots(from, to, successCallback, failureCallback) {
+      setStatus('Loading…', false);
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data.ok) {
+            setStatus(data.error || 'Failed to load', true);
+            failureCallback(new Error(data.error));
+            return;
+          }
+          setStatus('', false);
+          successCallback(slotsToEvents(data.slots || []));
+        })
+        .withFailureHandler(function (err) {
+          var msg = err && err.message ? err.message : String(err);
+          setStatus(msg, true);
+          failureCallback(err);
+        })
+        .apiListSlots(from.toISOString(), to.toISOString(), calendarLevelFilter);
+    }
+
+    function syncFilterButtons() {
+      document.querySelectorAll('.level-filter-btn').forEach(function (btn) {
+        btn.classList.toggle('active', (btn.getAttribute('data-level') || '') === calendarLevelFilter);
+      });
+    }
+
+    function initCalendar() {
+      syncFilterButtons();
+      var calEl = document.getElementById('group-calendar');
+      calendarInstance = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,listWeek'
+        },
+        height: 'auto',
+        timeZone: 'America/New_York',
+        events: function (info, success, failure) {
+          loadSlots(info.start, info.end, success, failure);
+        },
+        eventClick: function (info) {
+          openModal(info.event);
+        }
+      });
+      calendarInstance.render();
+
+      document.querySelectorAll('.level-filter-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          calendarLevelFilter = btn.getAttribute('data-level') || '';
+          syncFilterButtons();
+          calendarInstance.refetchEvents();
+        });
+      });
+    }
+
+    function openModal(event) {
+      selectedSlot = {
+        id: event.id,
+        title: (event.extendedProps.title || event.title).replace(/\s*\(\d+ left\)$/, ''),
+        start: event.startStr,
+        end: event.endStr,
+        lessonType: event.extendedProps.lessonType,
+        tutor: event.extendedProps.tutor,
+        spotsLeft: event.extendedProps.spotsLeft
+      };
+      document.getElementById('modal-title').textContent = selectedSlot.title;
+      document.getElementById('modal-meta').innerHTML =
+        '<strong>' + formatEtRange(selectedSlot.start, selectedSlot.end) + '</strong><br/>' +
+        'Tutor: ' + (selectedSlot.tutor || 'SAT Doctor');
+      document.getElementById('modal-spots').textContent =
+        selectedSlot.spotsLeft + ' seat' + (selectedSlot.spotsLeft === 1 ? '' : 's') + ' left';
+      document.getElementById('booking-form').classList.remove('hide');
+      document.getElementById('success-panel').classList.remove('show');
+      document.getElementById('form-error').style.display = 'none';
+      document.getElementById('btn-submit').disabled = false;
+      document.getElementById('btn-submit').textContent = 'Confirm reservation';
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      selectedSlot = null;
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal').addEventListener('click', function (e) {
+      if (e.target.id === 'modal') closeModal();
+    });
+
+    document.getElementById('booking-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!selectedSlot) return;
+
+      var name = document.getElementById('b-name').value.trim();
+      var email = document.getElementById('b-email').value.trim();
+      var phone = document.getElementById('b-phone').value.trim();
+      var errEl = document.getElementById('form-error');
+
+      if (!name || !email || !phone) {
+        errEl.textContent = 'Please fill in all fields.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.textContent = 'Reserving…';
+      errEl.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data.ok) {
+            errEl.textContent = data.error || 'Booking failed';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Confirm reservation';
+            return;
+          }
+          document.getElementById('booking-form').classList.add('hide');
+          document.getElementById('success-panel').classList.add('show');
+          var html = 'Confirmed for <strong>' + formatEtRange(data.start, data.end) + '</strong>.<br/>' +
+            'Zoom link sent to <strong>' + email + '</strong>.';
+          if (data.zoomUrl) {
+            html += '<br/><br/><a href="' + data.zoomUrl + '" target="_blank" rel="noopener" style="color:#1a2a5e;font-weight:600;">Open Zoom link</a>';
+          }
+          document.getElementById('success-text').innerHTML = html;
+          calendarInstance.refetchEvents();
+        })
+        .withFailureHandler(function (err) {
+          errEl.textContent = err && err.message ? err.message : String(err);
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Confirm reservation';
+        })
+        .apiCreateBooking({
+          slotId: selectedSlot.id,
+          name: name,
+          email: email,
+          phone: phone,
+          course: selectedSlot.title,
+          requestId: 'cal-' + Date.now()
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', initCalendar);
+  </script>
+</body>
+</html>
