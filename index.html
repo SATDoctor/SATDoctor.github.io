@@ -1495,48 +1495,17 @@
     }
 
     function submitBookingNoCors(payload) {
-      return new Promise(function(resolve, reject) {
-        try {
-          // Use a hidden iframe + form to POST to Apps Script.
-          // This bypasses all CORS/no-cors fetch restrictions from GitHub Pages.
-          var iframe = document.createElement('iframe');
-          iframe.name = 'booking-iframe-' + Date.now();
-          iframe.style.display = 'none';
-          document.body.appendChild(iframe);
-
-          var form = document.createElement('form');
-          form.method = 'POST';
-          form.action = APPS_SCRIPT_URL;
-          form.target = iframe.name;
-          form.style.display = 'none';
-
-          // Send the full JSON payload as a single field Apps Script can parse
-          var data = Object.assign({ action: 'book' }, payload);
-          Object.keys(data).forEach(function(key) {
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = data[key];
-            form.appendChild(input);
-          });
-
-          document.body.appendChild(form);
-          form.submit();
-
-          // Resolve after a short delay — we can't read the iframe response
-          // due to cross-origin rules, but if we got here the submit fired.
-          setTimeout(function() {
-            document.body.removeChild(form);
-            document.body.removeChild(iframe);
-            resolve();
-          }, 2000);
-        } catch(err) {
-          reject(err);
-        }
+      // GET with no-cors works without preflight and follows redirects properly.
+      // Params go on the URL so Apps Script receives them after its redirect.
+      var data = Object.assign({ action: 'book' }, payload);
+      var qs = new URLSearchParams(data);
+      return fetch(APPS_SCRIPT_URL + '?' + qs.toString(), {
+        method: 'GET',
+        mode: 'no-cors'
       });
     }
-	
-    function parseCsv(text) {
+
+        function parseCsv(text) {
       var rows = [];
       var row = [];
       var cell = '';
@@ -1782,6 +1751,10 @@
       btn.textContent = 'Reserving…';
       errEl.style.display = 'none';
 
+      // Debug: log exactly what we're about to send
+      console.log('[SAT Doctor] bookPayload about to be built. selectedSlot:', JSON.stringify(selectedSlot));
+      console.log('[SAT Doctor] name:', name, 'email:', email, 'phone:', phone);
+
       var bookPayload = {
         slotId: selectedSlot.id,
         name: name,
@@ -1790,6 +1763,8 @@
         course: selectedSlot.title,
         requestId: 'web-' + Date.now()
       };
+
+      console.log('[SAT Doctor] bookPayload:', JSON.stringify(bookPayload));
 
       function showBookSuccess(data) {
         document.getElementById('booking-form').classList.add('hide');

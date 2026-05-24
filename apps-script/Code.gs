@@ -5,6 +5,7 @@
  */
 
 var SHEET_SLOTS = 'Slots';
+var SHEET_LOG = 'Log';
 var SHEET_BOOKINGS = 'Bookings';
 var SHEET_ENROLLMENTS = 'Enrollments';
 
@@ -22,6 +23,10 @@ var ENROLLMENTS_HEADERS = [
   'timestamp', 'name', 'email', 'phone', 'course', 'message'
 ];
 
+var LOG_HEADERS = [
+  'timestamp', 'source', 'action', 'status', 'detail'
+];
+
 // ── HTTP handlers ───────────────────────────────────────────────────────────
 
 function doGet(e) {
@@ -37,6 +42,8 @@ function doGet(e) {
   var result;
 
   try {
+    log_('doGet', action || 'ping', 'received', 'params: ' + JSON.stringify(params));
+
     if (action === 'ping' || action === '') {
       result = {
         ok: true,
@@ -57,8 +64,10 @@ function doGet(e) {
         message: params.message || '',
         timestamp: params.timestamp || ''
       });
+      log_('doGet', 'enroll', 'ok', 'name=' + (params.name || '') + ' email=' + (params.email || ''));
     } else if (action === 'book') {
       ensureSheets_();
+      log_('doGet', 'book', 'attempting', 'slotId=' + params.slotId + ' name=' + params.name + ' email=' + params.email);
       result = createBooking_({
         slotId: params.slotId,
         name: params.name,
@@ -67,14 +76,17 @@ function doGet(e) {
         course: params.course || '',
         requestId: params.requestId || ''
       });
+      log_('doGet', 'book', result.ok ? 'ok' : 'fail', JSON.stringify(result));
     } else {
       result = {
         ok: false,
         error: 'Unknown action "' + action + '". Use action=ping, action=slots, or action=book.'
       };
+      log_('doGet', action, 'unknown', 'unrecognized action');
     }
   } catch (err) {
     result = { ok: false, error: String(err.message || err) };
+    log_('doGet', action, 'exception', String(err.message || err));
   }
 
   return jsonpResponse_(result, params.callback);
@@ -192,52 +204,64 @@ function createBooking_(data) {
   var course = String(data.course || '').trim();
   var requestId = String(data.requestId || '').trim();
 
+  log_('createBooking', 'start', 'info', 'slotId=' + slotId + ' email=' + email);
+
   if (!slotId || !name || !email || !phone) {
+    log_('createBooking', 'validation', 'fail', 'missing fields: slotId=' + slotId + ' name=' + name + ' email=' + email + ' phone=' + phone);
     return { ok: false, error: 'Missing required fields (slot, name, email, phone).' };
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    log_('createBooking', 'validation', 'fail', 'invalid email: ' + email);
     return { ok: false, error: 'Invalid email address.' };
   }
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
+    log_('createBooking', 'lock', 'fail', 'could not acquire lock');
     return { ok: false, error: 'Server busy — please try again.' };
   }
 
   try {
     if (requestId && isDuplicateRequest_(requestId)) {
+      log_('createBooking', 'duplicate', 'fail', 'requestId=' + requestId);
       return { ok: false, error: 'This booking was already submitted.' };
     }
 
     var slotsSheet = getSheet_(SHEET_SLOTS);
     var slotRowIndex = findSlotRowIndex_(slotsSheet, slotId);
     if (slotRowIndex < 0) {
+      log_('createBooking', 'findSlot', 'fail', 'slotId not found: ' + slotId);
       return { ok: false, error: 'Session not found.' };
     }
+    log_('createBooking', 'findSlot', 'ok', 'found at row ' + slotRowIndex);
 
     var headers = slotsSheet.getRange(1, 1, 1, slotsSheet.getLastColumn()).getValues()[0].map(normalizeHeader_);
     var slotRow = slotsSheet.getRange(slotRowIndex, 1, 1, headers.length).getValues()[0];
     var slot = rowToSlot_(headers, slotRow);
+    log_('createBooking', 'slotData', 'info', 'status=' + slot.status + ' capacity=' + slot.capacity + ' booked=' + slot.booked_count);
 
     if (slot.status !== 'open') {
+      log_('createBooking', 'slotStatus', 'fail', 'status is: ' + slot.status);
       return { ok: false, error: 'This session is no longer available.' };
     }
 
     var capacity = parseInt(slot.capacity, 10) || 0;
     var booked = parseInt(slot.booked_count, 10) || 0;
     if (booked >= capacity) {
+      log_('createBooking', 'capacity', 'fail', 'booked=' + booked + ' capacity=' + capacity);
       return { ok: false, error: 'This session is full.' };
     }
 
     if (hasExistingBooking_(slotId, email)) {
+      log_('createBooking', 'duplicate', 'fail', 'already booked: ' + email);
       return { ok: false, error: 'You are already registered for this session.' };
     }
 
     var bookingId = 'BK-' + Utilities.getUuid().slice(0, 8).toUpperCase();
     var now = new Date();
     var zoomUrl = slot.zoom_join_url || getDefaultZoomUrl_(slot.lesson_type);
-
+    log_('createBooking', 'appendBooking', 'attempting', 'bookingId=' + bookingId + ' zoomUrl=' + zoomUrl);
     appendBooking_({
       booking_id: bookingId,
       slot_id: slotId,
@@ -249,6 +273,7 @@ function createBooking_(data) {
       created_at: now.toISOString(),
       zoom_join_url: zoomUrl
     });
+    log_('createBooking', 'appendBooking', 'ok', 'row written to Bookings sheet');
 
     var newBooked = booked + 1;
     var bookedCol = headers.indexOf('booked_count') + 1;
@@ -260,7 +285,13 @@ function createBooking_(data) {
 
     if (requestId) markRequestId_(requestId);
 
-    sendBookingConfirmationEmail_(name, email, slot, zoomUrl, bookingId);
+    log_('createBooking', 'sendEmail', 'attempting', 'to=' + email);
+    try {
+      sendBookingConfirmationEmail_(name, email, slot, zoomUrl, bookingId);
+      log_('createBooking', 'sendEmail', 'ok', 'email sent to ' + email);
+    } catch(emailErr) {
+      log_('createBooking', 'sendEmail', 'fail', String(emailErr.message || emailErr));
+    }
 
     return {
       ok: true,
@@ -552,6 +583,7 @@ function ensureSheets_(silent) {
   ensureSheetWithHeaders_(ss, SHEET_SLOTS, SLOTS_HEADERS);
   ensureSheetWithHeaders_(ss, SHEET_BOOKINGS, BOOKINGS_HEADERS);
   ensureSheetWithHeaders_(ss, SHEET_ENROLLMENTS, ENROLLMENTS_HEADERS);
+  ensureSheetWithHeaders_(ss, SHEET_LOG, LOG_HEADERS);
 }
 
 function initializeSheets() {
@@ -685,6 +717,24 @@ function escapeHtml_(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function log_(source, action, status, detail) {
+  try {
+    var ss = getSpreadsheet_();
+    var sheet = ss.getSheetByName(SHEET_LOG);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_LOG);
+      sheet.getRange(1, 1, 1, 5).setValues([LOG_HEADERS]);
+      sheet.setFrozenRows(1);
+      sheet.getRange(1, 1, 1, 5).setFontWeight('bold');
+      sheet.setColumnWidth(1, 160);
+      sheet.setColumnWidth(4, 80);
+      sheet.setColumnWidth(5, 500);
+    }
+    var ts = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    sheet.appendRow([ts, source, action, status, String(detail || '').slice(0, 1000)]);
+  } catch(e) { /* never let logging crash the main flow */ }
 }
 
 function stripHtml_(html) {
