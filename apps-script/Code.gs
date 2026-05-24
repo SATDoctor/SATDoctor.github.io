@@ -51,6 +51,8 @@ function doGet(e) {
         spreadsheetConfigured: !!getSpreadsheetId_(),
         hint: 'Use ?action=slots&from=2026-01-01&to=2027-12-31 to list sessions.'
       };
+    } else if (action === 'config') {
+      result = { ok: true, spreadsheetId: getSpreadsheetId_() };
     } else if (action === 'slots') {
       ensureSheets_();
       result = { ok: true, slots: listSlots_(params.from, params.to, params.level) };

@@ -1393,9 +1393,17 @@
     // ── Apps Script Web App URL — deploy with Who has access: Anyone (see apps-script/README.md) ──
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTFXAiC81l9POiK7sKQ0qHU__ErfMF9XHx7iDJhtfEmklfklf42dayO9eIOfnSR1E-/exec';
 
-    // Google Sheet ID (between /d/ and /edit in the sheet URL). Share sheet: "Anyone with the link" → Viewer.
-    // Used to load the calendar without JSONP (more reliable on GitHub Pages).
-    const BOOKING_SPREADSHEET_ID = '1W8FseUOBU0Wt97nIUps-2Cue3AurUXBZMfnq7oq3iJk';
+    // Spreadsheet ID is fetched from Apps Script at runtime so it doesn't
+    // appear in the public GitHub source. Set via action=config in Code.gs.
+    let BOOKING_SPREADSHEET_ID = '';
+
+    appsScriptJsonp({ action: 'config' })
+      .then(function(data) {
+        if (data.ok && data.spreadsheetId) {
+          BOOKING_SPREADSHEET_ID = data.spreadsheetId;
+        }
+      })
+      .catch(function() { /* non-fatal — calendar falls back to JSONP slots */ });
 
     // Formsubmit endpoint (no redirect, JSON mode)
     const FORMSUBMIT_URL = 'https://formsubmit.co/ajax/thesatdoctor1600@gmail.com';
