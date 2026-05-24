@@ -431,94 +431,106 @@ function onOpen() {
 }
 
 function addNewSlotPrompt() {
-  var ui = SpreadsheetApp.getUi();
+  var html = HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><style>' +
+    'body{font-family:Arial,sans-serif;font-size:13px;padding:16px;margin:0;color:#222;}' +
+    'h3{margin:0 0 14px;font-size:15px;color:#1a2a5e;}' +
+    '.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}' +
+    '.field{display:flex;flex-direction:column;margin-bottom:10px;}' +
+    'label{font-weight:bold;margin-bottom:4px;font-size:12px;color:#444;}' +
+    'input,select{padding:7px 9px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100%;box-sizing:border-box;}' +
+    'input:focus,select:focus{outline:none;border-color:#1a2a5e;}' +
+    '.btn{background:#1a2a5e;color:#fff;border:none;padding:10px 24px;border-radius:4px;font-size:13px;cursor:pointer;width:100%;margin-top:6px;}' +
+    '.btn:hover{background:#111d42;}' +
+    '.err{color:#b45309;font-size:12px;margin-top:8px;display:none;}' +
+    '</style></head><body>' +
+    '<h3>Add New Group Session</h3>' +
+    '<div class="row">' +
+      '<div class="field"><label>Date</label><input type="date" id="dt" /></div>' +
+      '<div class="field"><label>Start Time (ET)</label><input type="time" id="tm" value="10:00" /></div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div class="field"><label>Duration (minutes)</label><input type="number" id="dur" value="90" min="30" max="360" /></div>' +
+      '<div class="field"><label>Capacity</label><input type="number" id="cap" value="6" min="1" max="50" /></div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div class="field"><label>Level</label>' +
+        '<select id="lvl">' +
+          '<option value="Level 1">Level 1 — Beginner</option>' +
+          '<option value="Level 2">Level 2 — Advanced</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="field"><label>Tutor</label>' +
+        '<select id="tutor">' +
+          '<option value="Krutant Mehta">Krutant Mehta</option>' +
+          '<option value="Abhi Nallamalli">Abhi Nallamalli</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>' +
+    '<div class="field"><label>Zoom URL (optional — leave blank to use default)</label>' +
+      '<input type="url" id="zoom" placeholder="https://zoom.us/j/..." /></div>' +
+    '<p class="err" id="err"></p>' +
+    '<button class="btn" onclick="submit()">Add Session</button>' +
+    '<script>' +
+    'function submit(){' +
+      'var dt=document.getElementById("dt").value;' +
+      'var tm=document.getElementById("tm").value;' +
+      'var dur=parseInt(document.getElementById("dur").value);' +
+      'var cap=parseInt(document.getElementById("cap").value);' +
+      'var lvl=document.getElementById("lvl").value;' +
+      'var tutor=document.getElementById("tutor").value;' +
+      'var zoom=document.getElementById("zoom").value.trim();' +
+      'var err=document.getElementById("err");' +
+      'if(!dt||!tm){err.textContent="Please enter a date and time.";err.style.display="block";return;}' +
+      'err.style.display="none";' +
+      'google.script.run' +
+        '.withSuccessHandler(function(msg){google.script.host.close();google.script.run.showAlert(msg);})' +
+        '.withFailureHandler(function(e){err.textContent=e.message;err.style.display="block";})' +
+        '.addSlotFromDialog(dt,tm,dur,cap,lvl,tutor,zoom);' +
+    '}' +
+    '<\/script>' +
+    '</body></html>'
+  ).setWidth(480).setHeight(340);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Add New Group Session');
+}
 
-  // Date
-  var dateRes = ui.prompt('New Session — Date',
-    'Enter date (e.g. 2026-07-12):', ui.ButtonSet.OK_CANCEL);
-  if (dateRes.getSelectedButton() !== ui.Button.OK) return;
-  var dateStr = dateRes.getResponseText().trim();
+function showAlert(msg) {
+  SpreadsheetApp.getUi().alert(msg);
+}
 
-  // Start time
-  var startRes = ui.prompt('New Session — Start Time',
-    'Enter start time in Eastern Time (e.g. 10:00 AM):', ui.ButtonSet.OK_CANCEL);
-  if (startRes.getSelectedButton() !== ui.Button.OK) return;
-  var startTimeStr = startRes.getResponseText().trim();
-
-  // Duration
-  var durRes = ui.prompt('New Session — Duration',
-    'Enter duration in minutes (e.g. 90):', ui.ButtonSet.OK_CANCEL);
-  if (durRes.getSelectedButton() !== ui.Button.OK) return;
-  var durationMin = parseInt(durRes.getResponseText().trim(), 10) || 90;
-
-  // Level
-  var levelRes = ui.prompt('New Session — Level',
-    'Enter level (Level 1 or Level 2):', ui.ButtonSet.OK_CANCEL);
-  if (levelRes.getSelectedButton() !== ui.Button.OK) return;
-  var level = levelRes.getResponseText().trim();
-  if (level !== 'Level 1' && level !== 'Level 2') {
-    ui.alert('Invalid level. Must be exactly "Level 1" or "Level 2".');
-    return;
-  }
-
-  // Tutor
-  var tutorRes = ui.prompt('New Session — Tutor',
-    'Enter tutor name (e.g. Krutant Mehta):', ui.ButtonSet.OK_CANCEL);
-  if (tutorRes.getSelectedButton() !== ui.Button.OK) return;
-  var tutor = tutorRes.getResponseText().trim();
-
-  // Capacity
-  var capRes = ui.prompt('New Session — Capacity',
-    'Enter max number of students (e.g. 6):', ui.ButtonSet.OK_CANCEL);
-  if (capRes.getSelectedButton() !== ui.Button.OK) return;
-  var capacity = parseInt(capRes.getResponseText().trim(), 10) || 6;
-
-  // Zoom URL (optional)
-  var zoomRes = ui.prompt('New Session — Zoom URL (optional)',
-    'Enter Zoom join URL, or leave blank to use Script Properties default:', ui.ButtonSet.OK_CANCEL);
-  if (zoomRes.getSelectedButton() !== ui.Button.OK) return;
-  var zoomUrl = zoomRes.getResponseText().trim();
-
-  // Parse date + time into Eastern Date
+function addSlotFromDialog(dateStr, timeStr, durationMin, capacity, level, tutor, zoomUrl) {
   try {
-    var combined = dateStr + ' ' + startTimeStr;
-    var start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd hh:mm a');
+    var combined = dateStr + ' ' + timeStr;
+    var start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd HH:mm');
     if (!start || isNaN(start.getTime())) {
-      // Try 24h format
-      start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd HH:mm');
+      throw new Error('Could not parse date/time: "' + combined + '"');
     }
-    if (!start || isNaN(start.getTime())) {
-      ui.alert('Could not parse date/time: "' + combined + '". Use format: 2026-07-12 and 10:00 AM');
-      return;
-    }
+
+    if (!zoomUrl) zoomUrl = getDefaultZoomUrl_(level);
+
+    var title = level === 'Level 1'
+      ? 'SAT Group \u2014 Beginner (Level 1)'
+      : 'SAT Group \u2014 Advanced (Level 2)';
+
+    ensureSheets_(true);
+    var sheet = getSheet_(SHEET_SLOTS);
+    var row = makeSlotRow_(level, title, tutor, start, durationMin, capacity, zoomUrl);
+    sheet.appendRow(row);
+
+    var end = new Date(start.getTime() + durationMin * 60 * 1000);
+    return (
+      'Session added!\n' +
+      'Level: ' + level + '\n' +
+      'Tutor: ' + tutor + '\n' +
+      'Date:  ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy') + '\n' +
+      'Time:  ' + Utilities.formatDate(start, 'America/New_York', 'h:mm a') +
+               ' \u2013 ' + Utilities.formatDate(end, 'America/New_York', 'h:mm a') + ' ET\n' +
+      'Capacity: ' + capacity + '\n' +
+      'Zoom: ' + (zoomUrl || '(none set)')
+    );
   } catch(err) {
-    ui.alert('Date/time error: ' + err.message);
-    return;
+    throw new Error(err.message || String(err));
   }
-
-  var title = level === 'Level 1'
-    ? 'SAT Group — Beginner (Level 1)'
-    : 'SAT Group — Advanced (Level 2)';
-
-  if (!zoomUrl) {
-    zoomUrl = getDefaultZoomUrl_(level);
-  }
-
-  ensureSheets_(true);
-  var sheet = getSheet_(SHEET_SLOTS);
-  var row = makeSlotRow_(level, title, tutor, start, durationMin, capacity, zoomUrl);
-  sheet.appendRow(row);
-
-  var end = new Date(start.getTime() + durationMin * 60 * 1000);
-  ui.alert(
-    'Session added!\n\n' +
-    'Level: ' + level + '\n' +
-    'Tutor: ' + tutor + '\n' +
-    'Start: ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy h:mm a') + ' ET\n' +
-    'End:   ' + Utilities.formatDate(end,   'America/New_York', 'h:mm a') + ' ET\n' +
-    'Capacity: ' + capacity + '\n' +
-    'Zoom: ' + (zoomUrl || '(none set)')
-  );
 }
 
 function saveSpreadsheetId() {
