@@ -1200,7 +1200,7 @@
     <div class="section-tag">Schedule</div>
     <h2>Book a Group Class</h2>
     <p style="font-size:1rem; color:var(--gray); line-height:1.8; max-width:640px; margin: 1rem 0 2rem;">
-      Choose an open session below. Times are shown in Eastern Time. After you register, we email your Zoom link right away.
+      Choose an open session below. Times are shown in your local timezone. After you register, we email your Zoom link right away.
     </p>
 
     <div class="calendar-toolbar">
@@ -1640,13 +1640,15 @@
     }
 
     function formatEtRange(startIso, endIso) {
-      var opts = { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' };
-      var t = { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' };
       var start = new Date(startIso);
       var end = new Date(endIso);
-      return start.toLocaleDateString('en-US', opts) + ' · ' +
-        start.toLocaleTimeString('en-US', t) + ' – ' +
-        end.toLocaleTimeString('en-US', t) + ' ET';
+      var dateOpts = { weekday: 'long', month: 'long', day: 'numeric' };
+      var timeOpts = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+      // Show date once, then start–end time with local timezone abbreviation
+      var datePart = start.toLocaleDateString('en-US', dateOpts);
+      var startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      var endTime = end.toLocaleTimeString('en-US', timeOpts);
+      return datePart + ' · ' + startTime + ' – ' + endTime;
     }
 
     function fetchSlots(fromDate, toDate) {
@@ -1698,7 +1700,7 @@
           right: 'dayGridMonth,listWeek'
         },
         height: 'auto',
-        timeZone: 'America/New_York',
+        timeZone: 'local',
         events: function (info, success, failure) {
           setCalendarStatus('Loading sessions…', false);
           fetchSlots(info.start, info.end)
