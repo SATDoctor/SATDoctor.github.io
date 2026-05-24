@@ -1494,19 +1494,49 @@
       });
     }
 
+    // Resolved URL after Apps Script's 302 redirect (params survive on this URL)
+    var resolvedExecUrl = null;
+
+    function resolveExecUrl() {
+      if (resolvedExecUrl) return Promise.resolve(resolvedExecUrl);
+      // Use JSONP ping to discover nothing — we just need the redirect URL.
+      // Instead, use a cors-anywhere-style approach: fetch with cors mode to
+      // follow the redirect and capture the final URL.
+      // Actually: use an <img> trick or iframe — but simplest is XMLHttpRequest
+      // which exposes responseURL after following redirects.
+      return new Promise(function(resolve) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', APPS_SCRIPT_URL + '?action=ping', true);
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            // responseURL is the final URL after all redirects
+            var finalUrl = xhr.responseURL || APPS_SCRIPT_URL;
+            // Strip everything after the path (remove query string from resolved URL)
+            resolvedExecUrl = finalUrl.split('?')[0];
+            console.log('[SAT Doctor] resolved exec URL:', resolvedExecUrl);
+            resolve(resolvedExecUrl);
+          }
+        };
+        xhr.onerror = function() { resolve(APPS_SCRIPT_URL); };
+        xhr.send();
+      });
+    }
+
     function submitBookingNoCors(payload) {
       var data = Object.assign({ action: 'book' }, payload);
       var qs = new URLSearchParams(data);
-      var url = APPS_SCRIPT_URL + '?' + qs.toString();
-      console.log('[SAT Doctor] submitBookingNoCors URL:', url);
-      return fetch(url, { method: 'GET', mode: 'no-cors' })
-        .then(function(res) {
-          console.log('[SAT Doctor] fetch completed, type:', res.type);
-        })
-        .catch(function(err) {
-          console.log('[SAT Doctor] fetch ERROR:', err.message);
-          throw err;
-        });
+      return resolveExecUrl().then(function(baseUrl) {
+        var url = baseUrl + '?' + qs.toString();
+        console.log('[SAT Doctor] final booking URL:', url);
+        return fetch(url, { method: 'GET', mode: 'no-cors' })
+          .then(function(res) {
+            console.log('[SAT Doctor] fetch completed, type:', res.type);
+          })
+          .catch(function(err) {
+            console.log('[SAT Doctor] fetch ERROR:', err.message);
+            throw err;
+          });
+      });
     }
 
         function parseCsv(text) {
