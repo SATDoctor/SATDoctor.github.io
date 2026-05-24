@@ -1424,40 +1424,25 @@
       btn.disabled = true;
 
       const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-      const payload = { name, email, phone, course, message, timestamp };
 
-      // Fire both requests simultaneously
-      const results = await Promise.allSettled([
+      // 1) Send to Apps Script via JSONP (bypasses CORS from GitHub Pages)
+      appsScriptJsonp({ action: 'enroll', name: name, email: email, phone: phone, course: course, message: message, timestamp: timestamp })
+        .catch(function() {}); // fire and forget
 
-        // 1) Google Apps Script → Sheets
-        fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',                        // Apps Script requires no-cors
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }),
-
-        // 2) Formsubmit → Email
-        fetch(FORMSUBMIT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            name, email, phone,
-            class_interest: course,
-            message,
-            _subject: 'New Enrollment Inquiry from SATDoctor Website',
-            _template: 'table',
-            _captcha: 'false'
-          })
+      // 2) Formsubmit → Email notification
+      fetch(FORMSUBMIT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: name, email: email, phone: phone,
+          class_interest: course,
+          message: message,
+          _subject: 'New Enrollment Inquiry from SATDoctor Website',
+          _template: 'table',
+          _captcha: 'false'
         })
+      }).catch(function() {});
 
-      ]);
-
-      // Show success regardless (no-cors means we can't read Apps Script response,
-      // but if we got here without a network error it went through)
       document.getElementById('enroll-form').style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
     });
