@@ -1923,8 +1923,10 @@
           }
         });
         console.log('[SAT Doctor] byLevel:', JSON.stringify(byLevel));
-        renderSeatBanner('seats-level1', byLevel['Level 1']);
-        renderSeatBanner('seats-level2', byLevel['Level 2']);
+        try { renderSeatBanner('seats-level1', byLevel['Level 1']); }
+        catch(e) { console.log('[SAT Doctor] level1 banner error:', e.message); }
+        try { renderSeatBanner('seats-level2', byLevel['Level 2']); }
+        catch(e) { console.log('[SAT Doctor] level2 banner error:', e.message); }
       }).catch(function(err) {
         console.log('[SAT Doctor] updateSeatBanners error:', err && err.message ? err.message : String(err));
       });
@@ -1960,7 +1962,7 @@
 
       el.className = 'seats-banner ' + cls;
       el.innerHTML = '<span>' + icon + '</span><span>' + text + '</span>';
-      el.style.display = 'flex';
+      el.setAttribute('style', 'display:flex !important');
     }
 
     // ── PRE-FILL HELPER ──
