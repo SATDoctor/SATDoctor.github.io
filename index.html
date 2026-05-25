@@ -1193,7 +1193,6 @@
             </div>
           </div>
 
-          <div id="seats-level1" class="seats-banner" style="display:none;"></div>
           <button type="button" class="group-enroll-btn solid" onclick="openGroupCalendar('Level 1')">
             View Level 1 Schedule
           </button>
@@ -1228,7 +1227,6 @@
             </div>
           </div>
 
-          <div id="seats-level2" class="seats-banner" style="display:none;"></div>
           <button type="button" class="group-enroll-btn gold" onclick="openGroupCalendar('Level 2')">
             View Level 2 Schedule
           </button>
@@ -1274,6 +1272,7 @@
       <button type="button" class="booking-modal-close" id="booking-modal-close" aria-label="Close">&times;</button>
       <h3 id="booking-modal-title">Reserve your seat</h3>
       <p class="booking-modal-meta" id="booking-modal-meta"></p>
+      <div id="booking-seats-banner" class="seats-banner" style="display:none;margin-bottom:1rem;"></div>
       <form id="booking-form" class="booking-form" novalidate>
         <input type="text" id="booking-honey" style="display:none" tabindex="-1" autocomplete="off" />
         <div class="form-group">
@@ -1810,7 +1809,7 @@
       if (event.extendedProps.isFull) return;
       selectedSlot = {
         id: event.id,
-        title: (event.extendedProps.title || event.title).replace(/\s*\(\d+ left\)$/, ''),
+        title: (event.extendedProps.title || event.title).replace(/\s*\(\d+ left\)$/, '').replace(/\s*\(Full\)$/, ''),
         start: event.startStr,
         end: event.endStr,
         lessonType: event.extendedProps.lessonType,
@@ -1822,6 +1821,13 @@
         '<strong>' + formatEtRange(selectedSlot.start, selectedSlot.end) + '</strong><br/>Tutor: ' +
         (selectedSlot.tutor || 'SAT Doctor');
 
+      // Render seat banner in modal
+      renderSeatBanner('booking-seats-banner', {
+        spotsLeft: selectedSlot.spotsLeft,
+        isFull: false,
+        start: selectedSlot.start
+      });
+
       document.getElementById('booking-form').classList.remove('hide');
       document.getElementById('booking-success').classList.remove('show');
       document.getElementById('booking-form-error').style.display = 'none';
@@ -1832,6 +1838,8 @@
 
     function closeBookingModal() {
       document.getElementById('booking-modal').classList.remove('open');
+      var banner = document.getElementById('booking-seats-banner');
+      if (banner) banner.style.display = 'none';
       selectedSlot = null;
     }
 
@@ -1901,10 +1909,7 @@
         });
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-      initGroupCalendar();
-      updateSeatBanners();
-    });
+    document.addEventListener('DOMContentLoaded', initGroupCalendar);
 
     function updateSeatBanners() {
       var now = new Date();
@@ -1963,7 +1968,7 @@
 
       el.className = 'seats-banner ' + cls;
       el.innerHTML = '<span>' + icon + '</span><span>' + text + '</span>';
-      el.setAttribute('style', 'display:flex !important');
+      el.style.display = 'flex';
     }
 
     // ── PRE-FILL HELPER ──
