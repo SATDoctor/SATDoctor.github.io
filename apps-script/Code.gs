@@ -187,7 +187,7 @@ function listSlots_(fromIso, toIso, levelFilter) {
 
     var slot = rowToSlot_(headers, row);
     if (!slot.slot_id) continue;
-    if (slot.status !== 'open') continue;
+    if (slot.status !== 'open' && slot.status !== 'full') continue;
 
     var startMs = Date.parse(slot.start_at);
     if (isNaN(startMs) || startMs < fromMs || startMs > toMs) continue;

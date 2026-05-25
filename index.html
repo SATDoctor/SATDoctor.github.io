@@ -1607,7 +1607,7 @@
           headers.forEach(function (h, idx) {
             slot[h] = row[idx] !== undefined ? String(row[idx]).trim() : '';
           });
-          if (!slot.slot_id || slot.status !== 'open') continue;
+          if (!slot.slot_id || (slot.status !== 'open' && slot.status !== 'full')) continue;
           // Normalize date strings from Google Sheets CSV — Sheets strips the
           // trailing 'Z' so browsers parse as local time instead of UTC.
           // Re-add 'Z' if no timezone offset is present so FullCalendar gets UTC.
