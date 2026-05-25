@@ -1908,23 +1908,26 @@
     function updateSeatBanners() {
       var now = new Date();
       var future = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      console.log('[SAT Doctor] updateSeatBanners: fetching slots...');
       fetchSlots(now, future).then(function(slots) {
-        // Find the next upcoming slot for each level — lowest spotsLeft wins if multiple
+        console.log('[SAT Doctor] updateSeatBanners: got', slots.length, 'slots:', JSON.stringify(slots));
         var byLevel = { 'Level 1': null, 'Level 2': null };
         slots.forEach(function(slot) {
           var lvl = slot.lessonType;
           if (!byLevel[lvl]) {
             byLevel[lvl] = slot;
           } else {
-            // Prefer the soonest session
             if (Date.parse(slot.start) < Date.parse(byLevel[lvl].start)) {
               byLevel[lvl] = slot;
             }
           }
         });
+        console.log('[SAT Doctor] byLevel:', JSON.stringify(byLevel));
         renderSeatBanner('seats-level1', byLevel['Level 1']);
         renderSeatBanner('seats-level2', byLevel['Level 2']);
-      }).catch(function() { /* non-fatal */ });
+      }).catch(function(err) {
+        console.log('[SAT Doctor] updateSeatBanners error:', err && err.message ? err.message : String(err));
+      });
     }
 
     function renderSeatBanner(elId, slot) {
