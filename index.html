@@ -632,39 +632,40 @@
     /* ── SEAT BANNERS ── */
     .seats-banner {
       border-radius: 6px;
-      padding: 0.65rem 1rem;
+      padding: 0.7rem 1rem;
       margin-bottom: 1rem;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      letter-spacing: 0.02em;
+      gap: 0.6rem;
+      letter-spacing: 0.01em;
+      min-height: 2.5rem;
     }
     .seats-banner.available {
-      background: rgba(37,99,235,0.08);
-      border: 1px solid rgba(37,99,235,0.25);
-      color: #1d4ed8;
+      background: #dbeafe;
+      border: 1.5px solid #93c5fd;
+      color: #1e40af;
     }
     .seats-banner.low {
-      background: rgba(234,88,12,0.1);
-      border: 1px solid rgba(234,88,12,0.35);
-      color: #c2410c;
+      background: #ffedd5;
+      border: 1.5px solid #fb923c;
+      color: #9a3412;
     }
     .seats-banner.last {
-      background: rgba(220,38,38,0.1);
-      border: 1px solid rgba(220,38,38,0.4);
-      color: #b91c1c;
+      background: #fee2e2;
+      border: 1.5px solid #f87171;
+      color: #991b1b;
       animation: pulse-urgency 1.8s ease-in-out infinite;
     }
     .seats-banner.full {
-      background: rgba(107,114,128,0.1);
-      border: 1px solid rgba(107,114,128,0.25);
-      color: #4b5563;
+      background: #f3f4f6;
+      border: 1.5px solid #9ca3af;
+      color: #374151;
     }
     @keyframes pulse-urgency {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      50% { opacity: 0.75; }
     }
 
     /* ── BOOKING CALENDAR ── */
