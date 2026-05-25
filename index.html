@@ -1932,6 +1932,7 @@
 
     function renderSeatBanner(elId, slot) {
       var el = document.getElementById(elId);
+      console.log('[SAT Doctor] renderSeatBanner', elId, 'el found:', !!el, 'slot:', slot ? slot.spotsLeft + ' spots' : 'null');
       if (!el) return;
       if (!slot) { el.style.display = 'none'; return; }
 
