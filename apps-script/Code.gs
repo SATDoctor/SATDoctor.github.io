@@ -197,7 +197,7 @@ function listSlots_(fromIso, toIso, levelFilter) {
     var capacity = parseInt(slot.capacity, 10) || 0;
     var booked = parseInt(slot.booked_count, 10) || 0;
     var spotsLeft = capacity - booked;
-    if (spotsLeft <= 0) continue;
+    var isFull = spotsLeft <= 0;
 
     slots.push({
       id: slot.slot_id,
@@ -208,11 +208,13 @@ function listSlots_(fromIso, toIso, levelFilter) {
       tutor: slot.tutor,
       capacity: capacity,
       booked: booked,
-      spotsLeft: spotsLeft,
+      spotsLeft: isFull ? 0 : spotsLeft,
+      isFull: isFull,
       extendedProps: {
         lessonType: slot.lesson_type,
         tutor: slot.tutor,
-        spotsLeft: spotsLeft,
+        spotsLeft: isFull ? 0 : spotsLeft,
+        isFull: isFull,
         capacity: capacity
       }
     });

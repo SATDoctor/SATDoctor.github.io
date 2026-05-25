@@ -691,8 +691,9 @@
     .fc .fc-button-primary:hover { background: var(--navy-dark); border-color: var(--navy-dark); }
     .fc-event { cursor: pointer; border: none !important; color: rgba(255,255,255,0.92) !important; }
     .fc-event .fc-event-title, .fc-event .fc-event-time { color: rgba(255,255,255,0.92) !important; }
-    .fc-event-level1 { background: var(--navy) !important; }
-    .fc-event-level2 { background: #3d4f8c !important; }
+    .fc-event-level1 { background: #2563eb !important; }
+    .fc-event-level2 { background: #16a34a !important; }
+    .fc-event-full { background: #dc2626 !important; cursor: default !important; opacity: 0.85; }
 
     .calendar-empty {
       display: none;
@@ -1221,8 +1222,9 @@
     </div>
 
     <div class="calendar-legend">
-      <span><i style="background:var(--navy);"></i> Level 1 — Beginner</span>
-      <span><i style="background:#3d4f8c;"></i> Level 2 — Advanced</span>
+      <span><i style="background:#2563eb;"></i> Level 1 — Beginner</span>
+      <span><i style="background:#16a34a;"></i> Level 2 — Advanced</span>
+      <span><i style="background:#dc2626;"></i> Class Full</span>
     </div>
   </section>
 
@@ -1397,7 +1399,7 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <script>
     // ── Apps Script Web App URL — deploy with Who has access: Anyone (see apps-script/README.md) ──
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGznltlEsYGutROjgYU6YXtC3usNMB21CrqtawD-PLX1ifqhnt07UDwOGqm5Z5iJwa/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTFXAiC81l9POiK7sKQ0qHU__ErfMF9XHx7iDJhtfEmklfklf42dayO9eIOfnSR1E-/exec';
 
     // Primary slot source: public Google Sheet CSV (Slots tab only).
     // The sheet is shared "Anyone with link can view" — only the Slots tab
@@ -1623,7 +1625,6 @@
           var capacity = parseInt(slot.capacity, 10) || 0;
           var booked = parseInt(slot.booked_count, 10) || 0;
           var spotsLeft = capacity - booked;
-          if (spotsLeft <= 0) continue;
           slots.push({
             id: slot.slot_id,
             title: slot.title || slot.lesson_type,
@@ -1633,7 +1634,8 @@
             tutor: slot.tutor,
             capacity: capacity,
             booked: booked,
-            spotsLeft: spotsLeft
+            spotsLeft: spotsLeft,
+            isFull: spotsLeft <= 0
           });
         }
         return slots;
@@ -1680,16 +1682,24 @@
 
     function slotsToEvents(slots) {
       return slots.map(function (slot) {
+        var isFull = slot.isFull || slot.spotsLeft <= 0;
+        var className = isFull ? 'fc-event-full'
+                      : slot.lessonType === 'Level 1' ? 'fc-event-level1'
+                      : 'fc-event-level2';
+        var title = isFull
+          ? slot.title + ' (Full)'
+          : slot.title + ' (' + slot.spotsLeft + ' left)';
         return {
           id: slot.id,
-          title: slot.title + ' (' + slot.spotsLeft + ' left)',
+          title: title,
           start: slot.start,
           end: slot.end,
-          classNames: [slot.lessonType === 'Level 1' ? 'fc-event-level1' : 'fc-event-level2'],
+          classNames: [className],
           extendedProps: {
             lessonType: slot.lessonType,
             tutor: slot.tutor,
             spotsLeft: slot.spotsLeft,
+            isFull: isFull,
             title: slot.title
           }
         };
@@ -1756,6 +1766,7 @@
     }
 
     function openBookingModal(event) {
+      if (event.extendedProps.isFull) return;
       selectedSlot = {
         id: event.id,
         title: (event.extendedProps.title || event.title).replace(/\s*\(\d+ left\)$/, ''),
