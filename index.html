@@ -58,7 +58,16 @@
       box-shadow: 0 1px 16px rgba(26,42,94,0.06);
     }
 
+    .nav-logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
     .nav-logo img { height: 44px; width: auto; display: block; }
+    .nav-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
 
 
     .nav-links {
@@ -936,10 +945,13 @@
     @media (max-width: 900px) {
       nav { padding: 1rem 1.5rem; }
       .nav-links { display: none; }
+      .nav-brand { display: none; }
       .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-left { padding: 4rem 1.5rem 3rem; }
       .hero-right { min-height: 300px; }
-      .section, .team-section, .group-section, .calendar-section, .form-section { padding: 4rem 1.5rem; }
+      .section, .team-section, .group-section, .calendar-section { padding: 4rem 1.5rem; }
+      #enroll { padding: 3rem 1.5rem !important; }
+      #enroll .contact-container > div { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
       #group-calendar { min-height: 400px; }
       .calendar-wrap { padding: 0.75rem; }
       .subjects-grid, .group-grid, .team-grid { grid-template-columns: 1fr; }
@@ -956,13 +968,14 @@
   <nav>
     <a href="#" class="nav-logo">
       <img src="SATDoctor_Logo.jpeg" alt="SAT Doctor Logo" />
+      <span class="nav-brand">SAT Doctor</span>
     </a>
     <ul class="nav-links">
       <li><a href="#subjects">Subjects</a></li>
       <li><a href="#team">Our Team</a></li>
       <li><a href="#group-courses">Group Classes</a></li>
-      <li><a href="#book-calendar">Book a Class</a></li>
-      <li><a href="#enroll" class="nav-cta">Enroll Now</a></li>
+      <li><a href="#enroll">1-1 Tutoring</a></li>
+      <li><a href="#book-calendar" class="nav-cta">Book a Group Class</a></li>
     </ul>
   </nav>
 
@@ -1311,28 +1324,24 @@
     </div>
   </div>
 
-  <!-- 1-ON-1 CTA BAND -->
-  <section style="background: var(--navy); padding: 4rem 5rem; text-align: center; position: relative; overflow: hidden;">
-    <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 24px);"></div>
-    <div style="position: relative; z-index: 1; max-width: 600px; margin: 0 auto;">
-      <div class="section-tag" style="color: var(--gold); margin-bottom: 1rem;">1-on-1 Tutoring</div>
-      <h2 style="color: white; margin-bottom: 1rem;">Need personalized help?</h2>
-      <p style="color: rgba(255,255,255,0.55); font-size: 1rem; line-height: 1.8; margin-bottom: 2rem;">Every student learns differently. Our 1-on-1 sessions are fully tailored to your child's pace, subject, and goals — with a PhD-level tutor dedicated to their success.</p>
-      <button onclick="prefillForm('1-on-1 Tutoring — Free Consultation', 'Any grade')" style="background: var(--gold); color: var(--navy-dark); border: none; padding: 1rem 2.5rem; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.2s, transform 0.15s;" onmouseover="this.style.background='#b8922e'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#c9a84c'; this.style.transform='translateY(0)'">
-        Request a Free Consultation
-      </button>
-    </div>
-  </section>
+  <!-- 1-ON-1 TUTORING + ENROLLMENT FORM (merged) -->
+  <section id="enroll" style="background: var(--gray-pale); padding: 6rem 5rem; position: relative; z-index: 1;">
+    <div class="contact-container" style="background: var(--navy-dark); padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
 
-  <!-- ENROLLMENT FORM -->
-  <section class="form-section" id="enroll">
-    <div class="contact-container">
-      <div style="text-align: center; margin-bottom: 2.5rem;">
-        <div class="section-tag">Registration</div>
-        <h2>Start Your Enrollment</h2>
-        <p style="font-size:0.92rem; color:var(--gray); margin-top:0.8rem; line-height:1.7;">Fill out the form below and we'll be in touch within 24 hours to schedule your free consultation.</p>
+      <!-- Navy header inside the card -->
+      <div style="position: relative; padding: 3rem 3.5rem 2.5rem; text-align: center; overflow: hidden;">
+        <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 24px);"></div>
+        <div style="position: relative; z-index: 1;">
+          <div class="section-tag" style="color: var(--gold); margin-bottom: 0.8rem;">1-on-1 Tutoring</div>
+          <h2 style="color: white; margin-bottom: 0.9rem;">Request a Free Consultation</h2>
+          <p style="color: rgba(255,255,255,0.6); font-size: 0.95rem; line-height: 1.8; max-width: 520px; margin: 0 auto;">
+            Tell us a little about your student and we'll match them with the right tutor and program. No commitment required — we'll reach out within 24 hours.
+          </p>
+        </div>
       </div>
 
+      <!-- White form area -->
+      <div style="background: var(--white); padding: 2.5rem 3.5rem 3rem;">
       <form id="enroll-form" novalidate>
 
         <div id="prefill-notice" class="prefill-notice">
@@ -1427,6 +1436,8 @@
         <h3 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--navy-dark); margin-bottom:0.5rem;">You're all set!</h3>
         <p style="font-size:0.92rem; color:var(--gray); line-height:1.7;">We received your inquiry and will be in touch within 24 hours.</p>
       </div>
+      </div>
+      </div>
     </div>
   </section>
 
@@ -1440,7 +1451,7 @@
       <li><a href="#team">Our Team</a></li>
       <li><a href="#group-courses">Group Classes</a></li>
       <li><a href="#book-calendar">Book a Class</a></li>
-      <li><a href="#enroll">Enroll</a></li>
+      <li><a href="#enroll">1-1 Tutoring</a></li>
     </ul>
     <div>© 2026 SAT Doctor. All rights reserved.</div>
   </footer>
