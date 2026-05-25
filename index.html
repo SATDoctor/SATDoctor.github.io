@@ -629,6 +629,44 @@
 
     .prefill-notice.show { display: block; }
 
+    /* ── SEAT BANNERS ── */
+    .seats-banner {
+      border-radius: 6px;
+      padding: 0.65rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+    .seats-banner.available {
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.25);
+      color: #1d4ed8;
+    }
+    .seats-banner.low {
+      background: rgba(234,88,12,0.1);
+      border: 1px solid rgba(234,88,12,0.35);
+      color: #c2410c;
+    }
+    .seats-banner.last {
+      background: rgba(220,38,38,0.1);
+      border: 1px solid rgba(220,38,38,0.4);
+      color: #b91c1c;
+      animation: pulse-urgency 1.8s ease-in-out infinite;
+    }
+    .seats-banner.full {
+      background: rgba(107,114,128,0.1);
+      border: 1px solid rgba(107,114,128,0.25);
+      color: #4b5563;
+    }
+    @keyframes pulse-urgency {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
     /* ── BOOKING CALENDAR ── */
     .calendar-section {
       padding: 6rem 5rem;
@@ -1154,6 +1192,7 @@
             </div>
           </div>
 
+          <div id="seats-level1" class="seats-banner" style="display:none;"></div>
           <button type="button" class="group-enroll-btn solid" onclick="openGroupCalendar('Level 1')">
             View Level 1 Schedule
           </button>
@@ -1188,6 +1227,7 @@
             </div>
           </div>
 
+          <div id="seats-level2" class="seats-banner" style="display:none;"></div>
           <button type="button" class="group-enroll-btn gold" onclick="openGroupCalendar('Level 2')">
             View Level 2 Schedule
           </button>
@@ -1860,7 +1900,64 @@
         });
     });
 
-    document.addEventListener('DOMContentLoaded', initGroupCalendar);
+    document.addEventListener('DOMContentLoaded', function() {
+      initGroupCalendar();
+      updateSeatBanners();
+    });
+
+    function updateSeatBanners() {
+      var now = new Date();
+      var future = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      fetchSlots(now, future).then(function(slots) {
+        // Find the next upcoming slot for each level — lowest spotsLeft wins if multiple
+        var byLevel = { 'Level 1': null, 'Level 2': null };
+        slots.forEach(function(slot) {
+          var lvl = slot.lessonType;
+          if (!byLevel[lvl]) {
+            byLevel[lvl] = slot;
+          } else {
+            // Prefer the soonest session
+            if (Date.parse(slot.start) < Date.parse(byLevel[lvl].start)) {
+              byLevel[lvl] = slot;
+            }
+          }
+        });
+        renderSeatBanner('seats-level1', byLevel['Level 1']);
+        renderSeatBanner('seats-level2', byLevel['Level 2']);
+      }).catch(function() { /* non-fatal */ });
+    }
+
+    function renderSeatBanner(elId, slot) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      if (!slot) { el.style.display = 'none'; return; }
+
+      var spots = slot.spotsLeft || 0;
+      var isFull = slot.isFull || spots <= 0;
+      var icon, text, cls;
+
+      if (isFull) {
+        icon = '🔴';
+        text = 'This class is full — join the waitlist below';
+        cls = 'full';
+      } else if (spots === 1) {
+        icon = '🔥';
+        text = 'Last spot remaining — book now!';
+        cls = 'last';
+      } else if (spots <= 2) {
+        icon = '⚡';
+        text = 'Only ' + spots + ' spots left — filling fast';
+        cls = 'low';
+      } else {
+        icon = '✓';
+        text = spots + ' spots available in the next session';
+        cls = 'available';
+      }
+
+      el.className = 'seats-banner ' + cls;
+      el.innerHTML = '<span>' + icon + '</span><span>' + text + '</span>';
+      el.style.display = 'flex';
+    }
 
     // ── PRE-FILL HELPER ──
     function prefillForm(courseName, gradeRange) {
