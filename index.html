@@ -10,6 +10,7 @@
 
   gtag('config', 'G-W1TK8GEWXK');
 </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="description" content="SAT Doctor offers personalized SAT & AP tutoring by PhD engineers in Maryland. Expert 1-on-1 prep with a score improvement guarantee. Book a free consultation today." />
@@ -746,7 +747,38 @@
     }
     .fc .fc-button-primary { background: var(--navy); border-color: var(--navy); }
     .fc .fc-button-primary:hover { background: var(--navy-dark); border-color: var(--navy-dark); }
-    .fc-event { cursor: pointer; border: none !important; color: rgba(255,255,255,0.92) !important; }
+    .fc-event { cursor: pointer; border: none !important; color: rgba(255,255,255,0.92) !important; transition: filter 0.15s, transform 0.15s; }
+    .fc-event:not(.fc-event-full):hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .fc-event-full { cursor: not-allowed !important; }
+    /* "Book →" badge on events */
+    .fc-event:not(.fc-event-full) .fc-event-title::after { content: ' →'; opacity: 0; transition: opacity 0.15s; font-size: 0.85em; }
+    .fc-event:not(.fc-event-full):hover .fc-event-title::after { opacity: 1; }
+
+    /* Session quick-list cards */
+    .session-chip {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      background: var(--white);
+      border: 1.5px solid rgba(26,42,94,0.12);
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      min-width: 170px;
+    }
+    .session-chip:hover { border-color: var(--navy); box-shadow: 0 4px 16px rgba(26,42,94,0.1); transform: translateY(-2px); }
+    .session-chip.full { cursor: not-allowed; opacity: 0.6; border-color: rgba(220,38,38,0.25); }
+    .session-chip-date { font-size: 0.8rem; font-weight: 700; color: var(--navy-dark); }
+    .session-chip-time { font-size: 0.75rem; color: var(--gray); }
+    .session-chip-meta { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.3rem; }
+    .session-chip-level { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 20px; }
+    .session-chip-level.l1 { background: rgba(37,99,235,0.1); color: #1d4ed8; }
+    .session-chip-level.l2 { background: rgba(22,163,74,0.1); color: #15803d; }
+    .session-chip-level.full { background: rgba(220,38,38,0.1); color: #b91c1c; }
+    .session-chip-spots { font-size: 0.7rem; color: var(--gray); }
+    .session-chip-book { font-size: 0.72rem; font-weight: 600; color: var(--navy); margin-top: 0.25rem; }
+    .session-chip.full .session-chip-book { color: #dc2626; }
     .fc-event .fc-event-title, .fc-event .fc-event-time { color: rgba(255,255,255,0.92) !important; }
     .fc-event-level1 { background: #2563eb !important; }
     .fc-event-level2 { background: #16a34a !important; }
@@ -954,7 +986,6 @@
     @media (max-width: 900px) {
       nav { padding: 1rem 1.5rem; }
       .nav-links { display: none; }
-      .nav-brand { display: none; }
       .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-left { padding: 4rem 1.5rem 3rem; }
       .hero-right { min-height: 300px; }
@@ -1271,9 +1302,24 @@
   <section class="calendar-section" id="book-calendar">
     <div class="section-tag">Schedule</div>
     <h2>Book a Group Class</h2>
-    <p style="font-size:1rem; color:var(--gray); line-height:1.8; max-width:640px; margin: 1rem 0 2rem;">
-      Choose an open session below. Times are shown in your local timezone. After you register, we email your Zoom link right away.
+    <p style="font-size:1rem; color:var(--gray); line-height:1.8; max-width:640px; margin: 1rem 0 1.5rem;">
+      Browse available sessions below and click any open class to reserve your spot. Times are shown in your local timezone.
     </p>
+
+    <!-- Click instruction banner -->
+    <div style="display:flex; align-items:center; gap:0.75rem; background:rgba(37,99,235,0.07); border:1.5px solid rgba(37,99,235,0.2); border-radius:8px; padding:0.9rem 1.25rem; margin-bottom:1.5rem; max-width:560px;">
+      <span style="font-size:1.4rem; flex-shrink:0;">👆</span>
+      <div>
+        <span style="font-size:0.88rem; font-weight:600; color:#1e40af;">Click any session on the calendar to reserve your spot.</span>
+        <span style="font-size:0.85rem; color:var(--gray);"> Full classes appear in red and cannot be booked.</span>
+      </div>
+    </div>
+
+    <!-- Upcoming sessions quick-list -->
+    <div id="sessions-list" style="margin-bottom:2rem; display:none;">
+      <div style="font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray); margin-bottom:0.75rem;">Upcoming Sessions</div>
+      <div id="sessions-list-inner" style="display:flex; flex-wrap:wrap; gap:0.75rem;"></div>
+    </div>
 
     <div class="calendar-toolbar">
       <div class="level-filters">
@@ -1292,8 +1338,8 @@
     </div>
 
     <div class="calendar-legend">
-      <span><i style="background:#2563eb;"></i> Level 1 — Beginner</span>
-      <span><i style="background:#16a34a;"></i> Level 2 — Advanced</span>
+      <span><i style="background:#2563eb;"></i> Level 1 — Beginner (click to book)</span>
+      <span><i style="background:#16a34a;"></i> Level 2 — Advanced (click to book)</span>
       <span><i style="background:#dc2626;"></i> Class Full</span>
     </div>
   </section>
@@ -1938,7 +1984,73 @@
         });
     });
 
-    document.addEventListener('DOMContentLoaded', initGroupCalendar);
+    document.addEventListener('DOMContentLoaded', function() {
+      initGroupCalendar();
+      populateSessionsList();
+    });
+
+    function populateSessionsList() {
+      var now = new Date();
+      var future = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+      fetchSlots(now, future).then(function(slots) {
+        if (!slots.length) return;
+        // Sort by date
+        slots.sort(function(a, b) { return Date.parse(a.start) - Date.parse(b.start); });
+        // Show up to 6 soonest
+        var shown = slots.slice(0, 6);
+        var inner = document.getElementById('sessions-list-inner');
+        var list = document.getElementById('sessions-list');
+        if (!inner || !list) return;
+        inner.innerHTML = '';
+        shown.forEach(function(slot) {
+          var start = new Date(slot.start);
+          var end = new Date(slot.end);
+          var isFull = slot.isFull || slot.spotsLeft <= 0;
+          var dateStr = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          var timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) +
+                        ' – ' + end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+          var levelClass = isFull ? 'full' : slot.lessonType === 'Level 1' ? 'l1' : 'l2';
+          var levelLabel = isFull ? 'Full' : slot.lessonType;
+          var spotsText = isFull ? 'No spots left' : slot.spotsLeft + ' spot' + (slot.spotsLeft === 1 ? '' : 's') + ' left';
+          var bookText = isFull ? '🔴 Full' : '→ Click to book';
+
+          var chip = document.createElement('div');
+          chip.className = 'session-chip' + (isFull ? ' full' : '');
+          chip.innerHTML =
+            '<span class="session-chip-date">' + dateStr + '</span>' +
+            '<span class="session-chip-time">' + timeStr + '</span>' +
+            '<div class="session-chip-meta">' +
+              '<span class="session-chip-level ' + levelClass + '">' + levelLabel + '</span>' +
+              '<span class="session-chip-spots">' + spotsText + '</span>' +
+            '</div>' +
+            '<span class="session-chip-book">' + bookText + '</span>';
+
+          if (!isFull) {
+            chip.addEventListener('click', function() {
+              // Scroll to calendar and open the modal for this slot
+              document.getElementById('book-calendar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+              setTimeout(function() {
+                // Build a fake event object matching what FullCalendar passes to openBookingModal
+                openBookingModal({
+                  id: slot.id,
+                  startStr: slot.start,
+                  endStr: slot.end,
+                  extendedProps: {
+                    title: slot.title,
+                    lessonType: slot.lessonType,
+                    tutor: slot.tutor,
+                    spotsLeft: slot.spotsLeft,
+                    isFull: false
+                  }
+                });
+              }, 400);
+            });
+          }
+          inner.appendChild(chip);
+        });
+        list.style.display = 'block';
+      }).catch(function() {});
+    }
 
     function updateSeatBanners() {
       var now = new Date();

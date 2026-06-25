@@ -35,7 +35,7 @@ function getPrivateSheet_(name) {
 
 var SLOTS_HEADERS = [
   'slot_id', 'start_at', 'end_at', 'lesson_type', 'title', 'tutor',
-  'capacity', 'booked_count', 'status', 'zoom_join_url'
+  'capacity', 'booked_count', 'status', 'zoom_join_url', 'lesson_number', 'subject'
 ];
 
 var BOOKINGS_HEADERS = [
@@ -326,6 +326,14 @@ function createBooking_(data) {
       log_('createBooking', 'sendEmail', 'fail', String(emailErr.message || emailErr));
     }
 
+    // Schedule reminder (24h before) and follow-up (1h after session ends)
+    try {
+      scheduleFollowUpEmails_(bookingId, name, email, slot, zoomUrl);
+      log_('createBooking', 'triggers', 'ok', 'reminder and follow-up triggers scheduled');
+    } catch(triggerErr) {
+      log_('createBooking', 'triggers', 'fail', String(triggerErr.message || triggerErr));
+    }
+
     return {
       ok: true,
       bookingId: bookingId,
@@ -390,6 +398,187 @@ function logEnrollment_(body) {
     body.message || ''
   ]);
   return { ok: true };
+}
+
+// ── Scheduled Email Triggers ────────────────────────────────────────────────
+
+function scheduleFollowUpEmails_(bookingId, name, email, slot, zoomUrl) {
+  var startMs  = Date.parse(slot.start_at);
+  var endMs    = Date.parse(slot.end_at);
+  if (isNaN(startMs) || startMs <= Date.now()) return;
+
+  var reminderTime = new Date(startMs - 24 * 60 * 60 * 1000);
+  var followUpTime = new Date(endMs   +  1 * 60 * 60 * 1000);
+
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('booking_' + bookingId, JSON.stringify({
+    bookingId:    bookingId,
+    name:         name,
+    email:        email,
+    lessonType:   slot.lesson_type,
+    lessonNumber: String(slot.lesson_number || '1'),
+    subject:      slot.subject || 'Math',
+    title:        slot.title || slot.lesson_type,
+    tutor:        slot.tutor || 'SAT Doctor',
+    startAt:      slot.start_at,
+    endAt:        slot.end_at,
+    zoomUrl:      zoomUrl || ''
+  }));
+
+  var reminderTrigger = ScriptApp.newTrigger('sendReminderEmail')
+    .timeBased().at(reminderTime).create();
+  props.setProperty('trigger_reminder_' + reminderTrigger.getUniqueId(), bookingId);
+
+  var followUpTrigger = ScriptApp.newTrigger('sendFollowUpEmail')
+    .timeBased().at(followUpTime).create();
+  props.setProperty('trigger_followup_' + followUpTrigger.getUniqueId(), bookingId);
+}
+
+function sendReminderEmail(e) {
+  var triggerId = e.triggerUid;
+  var props     = PropertiesService.getScriptProperties();
+  var bookingId = props.getProperty('trigger_reminder_' + triggerId);
+  if (!bookingId) { log_('sendReminderEmail', 'lookup', 'fail', 'no bookingId for ' + triggerId); return; }
+
+  var data = JSON.parse(props.getProperty('booking_' + bookingId) || '{}');
+  if (!data.email) { log_('sendReminderEmail', 'lookup', 'fail', 'no data for ' + bookingId); return; }
+
+  try {
+    var tz      = 'America/New_York';
+    var start   = new Date(data.startAt);
+    var end     = new Date(data.endAt);
+    var dateStr = Utilities.formatDate(start, tz, 'EEEE, MMMM d, yyyy');
+    var timeStr = Utilities.formatDate(start, tz, 'h:mm a') + ' \u2013 ' + Utilities.formatDate(end, tz, 'h:mm a') + ' ET';
+    var subject = 'Your SAT Doctor class is tomorrow \u2014 ' + dateStr;
+    var attachments = getPreClassAttachments_(data.lessonType, data.lessonNumber, data.subject);
+
+    var htmlBody = [
+      '<div style="font-family:Georgia,serif;max-width:580px;margin:0 auto;">',
+      '<div style="background:#1a2a5e;padding:24px 36px;border-radius:8px 8px 0 0;">',
+        '<p style="margin:0;font-size:20px;font-weight:bold;color:#fff;">SAT Doctor</p>',
+        '<p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.08em;text-transform:uppercase;">Class Reminder</p>',
+      '</div>',
+      '<div style="background:#fff;padding:28px 36px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">',
+        '<p style="font-size:16px;margin:0 0 8px;">Hi ' + escapeHtml_(data.name) + ',</p>',
+        '<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 20px;">Just a friendly reminder that your SAT group class is <strong>tomorrow</strong>. We\'re looking forward to seeing you!</p>',
+        '<div style="background:#f8f9fc;border:1px solid #e0e4f0;border-radius:6px;padding:16px 20px;margin-bottom:20px;">',
+          '<p style="margin:0 0 10px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6b7280;">Session Details</p>',
+          '<table style="width:100%;font-size:14px;border-collapse:collapse;">',
+            '<tr><td style="color:#6b7280;padding:4px 0;width:36%;">Class</td><td style="color:#111827;font-weight:600;">' + escapeHtml_(data.title) + '</td></tr>',
+            '<tr><td style="color:#6b7280;padding:4px 0;">Date</td><td style="color:#111827;font-weight:600;">' + dateStr + '</td></tr>',
+            '<tr><td style="color:#6b7280;padding:4px 0;">Time</td><td style="color:#111827;font-weight:600;">' + timeStr + '</td></tr>',
+            '<tr><td style="color:#6b7280;padding:4px 0;">Tutor</td><td style="color:#111827;font-weight:600;">' + escapeHtml_(data.tutor) + '</td></tr>',
+          '</table>',
+        '</div>',
+        data.zoomUrl
+          ? '<p style="margin:0 0 6px;"><a href="' + escapeHtml_(data.zoomUrl) + '" style="display:inline-block;background:#1a2a5e;color:#fff;padding:11px 24px;text-decoration:none;border-radius:4px;font-size:14px;font-weight:600;">Join Zoom Session</a></p><p style="font-size:12px;color:#9ca3af;margin:4px 0 20px;">Or copy: ' + escapeHtml_(data.zoomUrl) + '</p>'
+          : '<p style="font-size:14px;color:#374151;margin:0 0 20px;">Your Zoom link will be shared shortly before the session.</p>',
+        attachments.length ? '<p style="font-size:14px;color:#374151;margin:0 0 20px;">We\'ve attached your <strong>pre-class materials</strong>. Please review them before the session.</p>' : '',
+        '<p style="font-size:14px;color:#374151;margin:0 0 20px;">If you have any questions, reply to this email and we\'ll get back to you right away.</p>',
+        '<p style="font-size:14px;color:#374151;margin:0 0 4px;">See you tomorrow,</p>',
+        '<p style="font-size:15px;font-weight:700;color:#1a2a5e;margin:0 0 2px;">' + escapeHtml_(data.tutor) + '</p>',
+        '<p style="font-size:13px;color:#6b7280;margin:0;">SAT Doctor</p>',
+      '</div></div>'
+    ].join('');
+
+    GmailApp.sendEmail(data.email, subject, stripHtml_(htmlBody), {
+      htmlBody: htmlBody, name: 'SAT Doctor', attachments: attachments
+    });
+    log_('sendReminderEmail', 'send', 'ok', 'sent to ' + data.email);
+  } catch(err) {
+    log_('sendReminderEmail', 'send', 'fail', String(err.message || err));
+  } finally {
+    deleteTriggerById_(triggerId);
+    props.deleteProperty('trigger_reminder_' + triggerId);
+  }
+}
+
+function sendFollowUpEmail(e) {
+  var triggerId = e.triggerUid;
+  var props     = PropertiesService.getScriptProperties();
+  var bookingId = props.getProperty('trigger_followup_' + triggerId);
+  if (!bookingId) { log_('sendFollowUpEmail', 'lookup', 'fail', 'no bookingId for ' + triggerId); return; }
+
+  var data = JSON.parse(props.getProperty('booking_' + bookingId) || '{}');
+  if (!data.email) { log_('sendFollowUpEmail', 'lookup', 'fail', 'no data for ' + bookingId); return; }
+
+  try {
+    var firstName   = data.name.split(' ')[0];
+    var subject     = 'Great work today, ' + firstName + '! Your homework is attached';
+    var attachments = getHomeworkAttachments_(data.lessonType, data.lessonNumber, data.subject);
+
+    var htmlBody = [
+      '<div style="font-family:Georgia,serif;max-width:580px;margin:0 auto;">',
+      '<div style="background:#1a2a5e;padding:24px 36px;border-radius:8px 8px 0 0;">',
+        '<p style="margin:0;font-size:20px;font-weight:bold;color:#fff;">SAT Doctor</p>',
+        '<p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.08em;text-transform:uppercase;">Post-Class Follow-Up</p>',
+      '</div>',
+      '<div style="background:#fff;padding:28px 36px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">',
+        '<p style="font-size:16px;margin:0 0 8px;">Hi ' + escapeHtml_(data.name) + ',</p>',
+        '<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 20px;">Thank you for attending today\'s session \u2014 it was a pleasure working with you! To reinforce what we covered, please complete the homework assignment attached to this email.</p>',
+        '<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:16px 20px;margin-bottom:20px;">',
+          '<p style="margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#92400e;">Homework Instructions</p>',
+          '<ol style="margin:0;padding-left:18px;font-size:14px;color:#374151;line-height:1.9;">',
+            '<li>Complete the attached homework assignment at your own pace.</li>',
+            '<li>Show your work clearly where applicable.</li>',
+            '<li>Scan or photograph your completed work and save it as a <strong>PDF</strong>.</li>',
+            '<li>Email your PDF to <a href="mailto:thesatdoctor1600@gmail.com" style="color:#1a2a5e;">thesatdoctor1600@gmail.com</a> with the subject:<br/><strong style="color:#1a2a5e;">Homework \u2014 ' + escapeHtml_(data.title) + ' \u2014 ' + escapeHtml_(data.name) + '</strong></li>',
+          '</ol>',
+        '</div>',
+        '<p style="font-size:14px;color:#374151;margin:0 0 20px;">If you have any questions about the material, don\'t hesitate to reply to this email.</p>',
+        '<p style="font-size:14px;color:#374151;margin:0 0 4px;">Keep up the great work,</p>',
+        '<p style="font-size:15px;font-weight:700;color:#1a2a5e;margin:0 0 2px;">' + escapeHtml_(data.tutor) + '</p>',
+        '<p style="font-size:13px;color:#6b7280;margin:0;">SAT Doctor</p>',
+      '</div></div>'
+    ].join('');
+
+    GmailApp.sendEmail(data.email, subject, stripHtml_(htmlBody), {
+      htmlBody: htmlBody, name: 'SAT Doctor', attachments: attachments
+    });
+    log_('sendFollowUpEmail', 'send', 'ok', 'sent to ' + data.email);
+  } catch(err) {
+    log_('sendFollowUpEmail', 'send', 'fail', String(err.message || err));
+  } finally {
+    deleteTriggerById_(triggerId);
+    props.deleteProperty('trigger_followup_' + triggerId);
+    props.deleteProperty('booking_' + bookingId);
+  }
+}
+
+function getPreClassAttachments_(lessonType, lessonNumber, subject) {
+  var levelKey = lessonType === 'Level 1' ? 'L1' : 'L2';
+  var subjKey  = (subject === 'Reading') ? 'Reading' : 'Math';
+  var propKey  = 'PRE_' + levelKey + '_' + (parseInt(lessonNumber, 10) || 1) + '_' + subjKey;
+  return getAttachmentBlobs_(propKey);
+}
+
+function getHomeworkAttachments_(lessonType, lessonNumber, subject) {
+  var levelKey = lessonType === 'Level 1' ? 'L1' : 'L2';
+  var subjKey  = (subject === 'Reading') ? 'Reading' : 'Math';
+  var propKey  = 'HW_' + levelKey + '_' + (parseInt(lessonNumber, 10) || 1) + '_' + subjKey;
+  return getAttachmentBlobs_(propKey);
+}
+
+function getAttachmentBlobs_(propKey) {
+  var ids = (PropertiesService.getScriptProperties().getProperty(propKey) || '').trim();
+  if (!ids) return [];
+  var blobs = [];
+  ids.split(',').forEach(function(id) {
+    id = id.trim();
+    if (!id) return;
+    try {
+      blobs.push(DriveApp.getFileById(id).getBlob());
+    } catch(err) {
+      log_('getAttachmentBlobs_', propKey, 'fail', 'file id=' + id + ': ' + err.message);
+    }
+  });
+  return blobs;
+}
+
+function deleteTriggerById_(triggerId) {
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getUniqueId() === triggerId) ScriptApp.deleteTrigger(t);
+  });
 }
 
 // ── Email ───────────────────────────────────────────────────────────────────
@@ -530,10 +719,18 @@ function addNewSlotPrompt() {
         '</select>' +
       '</div>' +
     '</div>' +
-    '<div class="field"><label>Zoom URL (optional — leave blank to use default)</label>' +
-      '<input type="url" id="zoom" placeholder="https://zoom.us/j/..." /></div>' +
+    '<div class="row">' +
+      '<div class="field"><label>Lesson number (1–6)</label><input type="number" id="lessonnum" value="1" min="1" max="6" /></div>' +
+      '<div class="field"><label>Subject</label>' +
+        '<select id="subject">' +
+          '<option value="Math">Math</option>' +
+          '<option value="Reading">Reading</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>' +
+    '<div class="field"><label>Zoom URL (optional — leave blank to use default)</label><input type="url" id="zoom" placeholder="https://zoom.us/j/..." /></div>' +
     '<p class="err" id="err"></p>' +
-    '<button class="btn" onclick="submit()">Add Session</button>' +
+    '<button class="btn" onclick="submit()">Add session</button>' +
     '<script>' +
     'function submit(){' +
       'var dt=document.getElementById("dt").value;' +
@@ -543,17 +740,19 @@ function addNewSlotPrompt() {
       'var lvl=document.getElementById("lvl").value;' +
       'var tutor=document.getElementById("tutor").value;' +
       'var zoom=document.getElementById("zoom").value.trim();' +
+      'var lessonnum=parseInt(document.getElementById("lessonnum").value)||1;' +
+      'var subject=document.getElementById("subject").value;' +
       'var err=document.getElementById("err");' +
       'if(!dt||!tm){err.textContent="Please enter a date and time.";err.style.display="block";return;}' +
       'err.style.display="none";' +
       'google.script.run' +
         '.withSuccessHandler(function(msg){google.script.host.close();google.script.run.showAlert(msg);})' +
         '.withFailureHandler(function(e){err.textContent=e.message;err.style.display="block";})' +
-        '.addSlotFromDialog(dt,tm,dur,cap,lvl,tutor,zoom);' +
+        '.addSlotFromDialog(dt,tm,dur,cap,lvl,tutor,zoom,lessonnum,subject);' +
     '}' +
     '<\/script>' +
     '</body></html>'
-  ).setWidth(480).setHeight(340);
+  ).setWidth(480).setHeight(400);
   SpreadsheetApp.getUi().showModalDialog(html, 'Add New Group Session');
 }
 
@@ -561,7 +760,7 @@ function showAlert(msg) {
   SpreadsheetApp.getUi().alert(msg);
 }
 
-function addSlotFromDialog(dateStr, timeStr, durationMin, capacity, level, tutor, zoomUrl) {
+function addSlotFromDialog(dateStr, timeStr, durationMin, capacity, level, tutor, zoomUrl, lessonNumber, subject) {
   try {
     var combined = dateStr + ' ' + timeStr;
     var start = Utilities.parseDate(combined, 'America/New_York', 'yyyy-MM-dd HH:mm');
@@ -570,6 +769,8 @@ function addSlotFromDialog(dateStr, timeStr, durationMin, capacity, level, tutor
     }
 
     if (!zoomUrl) zoomUrl = getDefaultZoomUrl_(level);
+    lessonNumber = parseInt(lessonNumber, 10) || 1;
+    subject = (subject === 'Reading') ? 'Reading' : 'Math';
 
     var title = level === 'Level 1'
       ? 'SAT Group \u2014 Beginner (Level 1)'
@@ -577,13 +778,13 @@ function addSlotFromDialog(dateStr, timeStr, durationMin, capacity, level, tutor
 
     ensureSheets_(true);
     var sheet = getSheet_(SHEET_SLOTS);
-    var row = makeSlotRow_(level, title, tutor, start, durationMin, capacity, zoomUrl);
+    var row = makeSlotRow_(level, title, tutor, start, durationMin, capacity, zoomUrl, lessonNumber, subject);
     sheet.appendRow(row);
 
     var end = new Date(start.getTime() + durationMin * 60 * 1000);
     return (
       'Session added!\n' +
-      'Level: ' + level + '\n' +
+      'Level: ' + level + ' (Lesson ' + lessonNumber + ', ' + subject + ')\n' +
       'Tutor: ' + tutor + '\n' +
       'Date:  ' + Utilities.formatDate(start, 'America/New_York', 'EEE, MMM d yyyy') + '\n' +
       'Time:  ' + Utilities.formatDate(start, 'America/New_York', 'h:mm a') +
@@ -735,7 +936,7 @@ function pad2_(n) {
   return n < 10 ? '0' + n : String(n);
 }
 
-function makeSlotRow_(lessonType, title, tutor, start, durationMin, capacity, zoomUrl) {
+function makeSlotRow_(lessonType, title, tutor, start, durationMin, capacity, zoomUrl, lessonNumber, subject) {
   var end = new Date(start.getTime() + durationMin * 60 * 1000);
   return [
     'SLOT-' + Utilities.getUuid().slice(0, 8).toUpperCase(),
@@ -747,7 +948,9 @@ function makeSlotRow_(lessonType, title, tutor, start, durationMin, capacity, zo
     capacity,
     0,
     'open',
-    zoomUrl || ''
+    zoomUrl || '',
+    lessonNumber || 1,
+    subject || 'Math'
   ];
 }
 
